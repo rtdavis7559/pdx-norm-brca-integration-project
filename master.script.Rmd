@@ -23,14 +23,14 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 #HCI010
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.seurat3.object.Rda")
 #Norm/BRCA
-load("/Users/paigehalas/Desktop/Kevin_Data/Kevin_Data/Subset.Rda")
+load("/Users/paigehalas/Desktop/Kevin_Data/Kevin_Data/norm_brca_integrated.RObj")
 ```
 
 ## Subset Norm/BRCA Dataset to Norm/BRCA
 
 ```{r subset.normbrca.dataset}
 #SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
-norm.brca.subset.objects<-SplitObject(Subset,"Compartment")
+norm.brca.subset.objects<-SplitObject(Norm.BRCA.integrated,"Compartment")
 
 #We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
 norm.brca.epithelial.object<-norm.brca.subset.object$EPITHELIAL
