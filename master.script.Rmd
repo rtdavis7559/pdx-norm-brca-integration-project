@@ -11,6 +11,8 @@ output: html_document
 library(Seurat)
 library(dplyr)
 library(reshape2)
+library(ggplot2)
+library(patchwork)
 ```
 
 ## Load in seurat objects
@@ -37,19 +39,18 @@ norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
 norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```
 
-## Data Integration - Standard Workflow
+## Data Integration - scTransform
 
-```{r standard.workflow.generate.object.list}
+```{r sctransform.generate.object.list}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
-standard.workflow.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
+sctransform.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
 ```
-```{r standard.workflow.normalize.objects}
-#Prior to finding anchors, we perform standard preprocessing (log-normalization), and identify variable features individually for each. Note that Seurat v3 implements an improved method for variable feature selection based on a variance stabilizing transformation ("vst")
-for (i in 1:length(standard.workflow.object.list)) {
-    standard.workflow.object.list[[i]] <- NormalizeData(standard.workflow.object.list[[i]], verbose = TRUE)
-    standard.workflow.object.list[[i]] <- FindVariableFeatures(standard.workflow.object.list[[i]], selection.method = "vst", 
-        nfeatures = 2000, verbose = TRUE)
+```{r sctransform.normalize.objects}
+#Conceptually, this workflow is very similar to what we have previously introduced, where we ‘correct’ (or harmonize) log-normalized expression values across datasets. Here, instead, we will harmonize the Pearson residuals that are output from SCTransform.
+#First, setup the Seurat object list, and run SCTransform on each object separately
+for (i in 1:length(sctransform.object.list)) {
+    sctransform.object.list[[i]] <- SCTransform(sctransform.object.list[[i]], verbose = TRUE)
 }
 
 #Changes to branch
