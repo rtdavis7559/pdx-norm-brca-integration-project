@@ -23,18 +23,18 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 #HCI010
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.seurat3.object.Rda")
 #Norm/BRCA
-#load("/Users/ryan/Documents/pdx-norm-brca-integration-project/seurat-objects/norm_brca_integrated.RObj")
+load("/Users/paigehalas/Desktop/Kevin_Data/Kevin_Data/Subset.Rda")
 ```
 
 ## Subset Norm/BRCA Dataset to Norm/BRCA
 
 ```{r subset.normbrca.dataset}
 #SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
-norm.brca.subset.objects<-SplitObject(Norm.BRCA.integrated,"Compartment")
+norm.brca.subset.objects<-SplitObject(Subset,"Compartment")
 
 #We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
-norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
-norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
+norm.brca.epithelial.object<-norm.brca.subset.object$EPITHELIAL
+norm.brca.stromal.object<-norm.brca.subset.object$STROMAL
 ```
 
 ## Data Integration - Standard Workflow
@@ -42,7 +42,8 @@ norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```{r standard.workflow.generate.object.list}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
-standard.workflow.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
+standard.workflow.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated)
+#list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
 ```
 ```{r standard.workflow.normalize.objects}
 #Prior to finding anchors, we perform standard preprocessing (log-normalization), and identify variable features individually for each. Note that Seurat v3 implements an improved method for variable feature selection based on a variance stabilizing transformation ("vst")
@@ -52,3 +53,6 @@ for (i in 1:length(standard.workflow.object.list)) {
         nfeatures = 2000, verbose = TRUE)
 }
 ```
+```{r standard.workflow.find.integration.anchors}
+#Next we find anchors, which are pairwise correspondants between individual cells which originate from the same biological state. These anchors are then used to transfer infromation from one dataset to another
+
