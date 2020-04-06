@@ -1,0 +1,4 @@
+"0","#SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the ""Compartment"" column, to generate two new objects, the epithelial compartment and the stromal compartment"
+"0","norm.brca.subset.objects<-SplitObject(Norm.BRCA.integrated,""Compartment"")"
+"2","Error in is.data.frame(x) : object 'Norm.BRCA.integrated' not found
+"

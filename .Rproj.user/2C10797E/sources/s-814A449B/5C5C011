@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1586196058275.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3156262051",
+    "id" : "5C5C011",
+    "lastKnownWriteTime" : 1586204860,
+    "last_content_update" : 1586204860322,
+    "path" : "~/Documents/pdx-norm-brca-integration-project/master.script.Rmd",
+    "project_path" : "master.script.Rmd",
+    "properties" : {
+        "cursorPosition" : "54,18",
+        "scrollLine" : "24"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
