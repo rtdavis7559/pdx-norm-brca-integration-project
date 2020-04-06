@@ -51,4 +51,6 @@ for (i in 1:length(standard.workflow.object.list)) {
     standard.workflow.object.list[[i]] <- FindVariableFeatures(standard.workflow.object.list[[i]], selection.method = "vst", 
         nfeatures = 2000, verbose = TRUE)
 }
+
+#Changes to branch
 ```
