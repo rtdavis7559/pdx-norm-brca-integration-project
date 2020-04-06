@@ -8,6 +8,7 @@ output: html_document
 ## Load R packages
 
 ```{r load.packages}
+install.packages("Seurat")
 library(Seurat)
 library(dplyr)
 library(reshape2)
@@ -33,10 +34,13 @@ load("/Users/paigehalas/Desktop/Kevin_Data/Kevin_Data/norm_brca_integrated.RObj"
 norm.brca.subset.objects<-SplitObject(Norm.BRCA.integrated,"Compartment")
 
 #We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
-norm.brca.epithelial.object<-norm.brca.subset.object$EPITHELIAL
-norm.brca.stromal.object<-norm.brca.subset.object$STROMAL
+norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
+norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```
-
+```{r check columns and the epithelial subset}
+colnames(norm.brca.epithelial.object@meta.data)
+head(norm.brca.epithelial.object$Compartment)
+```
 ## Data Integration - Standard Workflow
 
 ```{r standard.workflow.generate.object.list}
