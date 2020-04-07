@@ -65,8 +65,8 @@ for (i in 1:length(standard.workflow.object.list)) {
 ```
 ```{r standard.workflow.find.integration.anchors}
 #Next we find anchors, which are pairwise correspondants between individual cells which originate from the same biological state. These anchors are then used to transfer infromation from one dataset to another
-reference.list <- standard.workflow.object.list[c("hci001", "hci002", "hci010", "norm")]
-integration.anchors <- FindIntegrationAnchors(standard.workflow.object.list = reference.list, dims = 1:30)
+reference.list <- standard.workflow.object.list
+integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
 ```
 ```{r standard.workflow.integrate.data}
 #After 
