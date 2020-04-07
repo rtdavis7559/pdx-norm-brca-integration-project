@@ -72,6 +72,20 @@ integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims
 #After 
 integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
 ```
-```{}
 
-```{r }
+```{r visualize.integration.matrix}
+#load necessary packages for visualization 
+library(ggplot2)
+library(cowplot)
+library(patchwork)
+
+# switch to integrated assay. The variable features of this assay are automatically
+# set during IntegrateData
+DefaultAssay(integrated.data) <- "integrated"
+```
+```{r standard.workflow.integration.visualization.clustering}
+scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
+PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
+UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+DimPlot(UMAP.integrated.data, reduction = "umap")
+```
