@@ -87,6 +87,6 @@ DefaultAssay(integrated.data) <- "integrated"
 scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
 UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
-DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
+DimPlot(UMAP.integrated.data, reduction = "umap")
 ```
 
