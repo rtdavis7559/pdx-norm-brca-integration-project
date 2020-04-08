@@ -84,6 +84,41 @@ save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca
 
 norm.brca.pdx.integrated <- RunPCA(norm.brca.pdx.integrated, verbose = FALSE)
 norm.brca.pdx.integrated <- RunUMAP(norm.brca.pdx.integrated, dims = 1:30)
-plots <- DimPlot(norm.brca.pdx.integrated, group.by = c("patient.id"))
-plots
+```
+
+##Adding MetaData
+
+```{r add.meta.data}
+#Generate new list for the dataset type
+combined_status <- list ()
+#Adding the five different classifications to the list 
+combined_status[grep("NORMAL",norm.brca.pdx.integrated$Status)] <- "Normal"
+combined_status[grep("BRCA",norm.brca.pdx.integrated$Status)] <- "BRCA"
+combined_status[grep("HCI001",norm.brca.pdx.integrated$patient.id)] <- "HCI001"
+combined_status[grep("HCI002",norm.brca.pdx.integrated$patient.id)] <- "HCI002"
+combined_status[grep("HCI010",norm.brca.pdx.integrated$patient.id)] <- "HCI010"
+#Add new metadata column 
+norm.brca.pdx.integrated[["combined_status"]] <- as.character(combined_status)
+
+#Generate new list for the cell type
+Combined_Cell_Type <- list()
+#Get the lung and lymph cells from the PDX models that are metastatic
+Combined_Cell_Type[grep("Lung", norm.brca.pdx.integrated$tissue)] <- "Metastatic"
+Combined_Cell_Type[grep("Lymph", norm.brca.pdx.integrated$tissue)] <- "Metastatic"
+#Get the tumor cells from the PDX models that are tumor cells 
+Combined_Cell_Type[grep("Tumor", norm.brca.pdx.integrated$tissue)] <- "Tumor"
+#Get the cell types from Kevins Norm/BRCA dataset 
+Combined_Cell_Type[grep("Basal", norm.brca.pdx.integrated$Cell.Type)] <- "Basal"
+Combined_Cell_Type[grep("Luminal_1", norm.brca.pdx.integrated$Cell.Type)] <- "Luminal_1"
+Combined_Cell_Type[grep("Luminal_2", norm.brca.pdx.integrated$Cell.Type)] <- "Luminal_2"
+Combined_Cell_Type[grep("Unclassified", norm.brca.pdx.integrated$Cell.Type)] <- "Unclassified"
+#Add new column 
+norm.brca.pdx.integrated[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
+```
+
+##Visualizing Data
+
+```{r sctransform.visualize}
+DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",pt.size = 0.5)
+DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",split.by = "Combined_Cell_Type", ncol = 2,pt.size = 0.5)
 ```
