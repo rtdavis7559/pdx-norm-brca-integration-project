@@ -45,14 +45,45 @@ norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```{r sctransform.generate.object.list}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
-sctransform.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
+sctransform.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.integrated.epithelial)
 ```
 ```{r sctransform.normalize.objects}
 #Conceptually, this workflow is very similar to what we have previously introduced, where we ‘correct’ (or harmonize) log-normalized expression values across datasets. Here, instead, we will harmonize the Pearson residuals that are output from SCTransform.
 #First, setup the Seurat object list, and run SCTransform on each object separately
 for (i in 1:length(sctransform.object.list)) {
-    sctransform.object.list[[i]] <- SCTransform(sctransform.object.list[[i]], verbose = TRUE)
+    sctransform.object.list[[i]] <- SCTransform(sctransform.object.list[[i]], verbose = FALSE)
 }
+```
+```{r sctransform.feature.selection}
+#Next, select features for downstream integration, and run PrepSCTIntegration, which ensures that all necessary Pearson residuals have been calculated.
+#Running on 3000 selected features (may test others later)
+norm.brca.pdx.features.3000 <- SelectIntegrationFeatures(object.list = sctransform.object.list, 
+                                                         nfeatures = 3000)
+#need to increase globals size limit otherwise the next line will error (will need to be adjusted for size of future datasets)
+options(future.globals.maxSize = (6000*1024^2))
 
-#Changes to branch
+norm.brca.pdx.features.list.3000 <- PrepSCTIntegration(object.list = sctransform.object.list, 
+                                                  anchor.features = norm.brca.pdx.features.3000, 
+                                                  verbose = FALSE)
+```
+```{r sctransform.integrate}
+#Next, identify anchors and integrate the datasets. Commands are identical to the standard workflow, but make sure to set normalization.method = 'SCT':
+
+norm.brca.pdx.anchors <- FindIntegrationAnchors(object.list = norm.brca.pdx.features.list.3000, normalization.method = "SCT", 
+    anchor.features = norm.brca.pdx.features.3000, verbose = FALSE)
+norm.brca.pdx.integrated <- IntegrateData(anchorset = norm.brca.pdx.anchors, normalization.method = "SCT", 
+    verbose = FALSE)
+
+save(norm.brca.pdx.integrated, file="seurat-objects/norm.brca.pdx.integrated.sctransform.3000features.SeuratObject.Rda")
+```
+
+##Dimentionality Reduction and Clustering
+
+```{r }
+#Now proceed with downstream analysis (i.e. visualization, clustering) on the integrated dataset. Commands are identical to the standard workflow, but do not run the ScaleData function after integration. You can see that after integration, cells group by their biological cell type (which has been pre-annotated), instead of by their underlying technology.
+
+norm.brca.pdx.integrated <- RunPCA(norm.brca.pdx.integrated, verbose = FALSE)
+norm.brca.pdx.integrated <- RunUMAP(norm.brca.pdx.integrated, dims = 1:30)
+plots <- DimPlot(norm.brca.pdx.integrated, group.by = c("patient.id"))
+plots
 ```
