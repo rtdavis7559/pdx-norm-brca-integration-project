@@ -92,20 +92,27 @@ DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE, group.by = "Comb
 ```
 
 ```{r adding.metadata.column}
+#Generate new list for the dataset type
+Combined_Classification <- list ()
+#Adding the five different classifications to the list 
 Combined_Classification[grep("NORMAL",UMAP.integrated.data$Status)] <- "Normal"
 Combined_Classification[grep("BRCA",UMAP.integrated.data$Status)] <- "BRCA"
 Combined_Classification[grep("HCI001",UMAP.integrated.data$patient.id)] <- "HCI001"
 Combined_Classification[grep("HCI002",UMAP.integrated.data$patient.id)] <- "HCI002"
 Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI010"
-#Add new column 
+#Add new metadata column 
 UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
 ```
 
 ```{r combined.cell.type}
+#Generate new list for the cell type
 Combined_Cell_Type <- list()
+#Get the lung and lymph cells from the PDX models that are metastatic
 Combined_Cell_Type[grep("Lung", UMAP.integrated.data$tissue)] <- "Metastatic"
 Combined_Cell_Type[grep("Lymph", UMAP.integrated.data$tissue)] <- "Metastatic"
+#Get the tumor cells from the PDX models that are tumor cells 
 Combined_Cell_Type[grep("Tumor", UMAP.integrated.data$tissue)] <- "Tumor"
+#Get the cell types from Kevins Norm/BRCA dataset 
 Combined_Cell_Type[grep("Basal", UMAP.integrated.data$Cell.Type)] <- "Basal"
 Combined_Cell_Type[grep("Luminal_1", UMAP.integrated.data$Cell.Type)] <- "Luminal_1"
 Combined_Cell_Type[grep("Luminal_2", UMAP.integrated.data$Cell.Type)] <- "Luminal_2"
@@ -115,6 +122,7 @@ UMAP.integrated.data[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
 ```
 
 ```{r attempt.to.scale.on.lists}
+#look to scale the integrated data by patient using the new combined classification list to see if this improves the clustering
 scale.integrated.data.by.patient <- ScaleData(UMAP.integrated.data, verbose = TRUE, vars.to.regress = "Combined_Classification")
 PCA.integrated.data.by.patient<- RunPCA(scale.integrated.data.by.patient, npcs = 30, verbose = TRUE)
 UMAP.integrated.data.by.patient <- RunUMAP(PCA.integrated.data.by.patient, reduction = "pca", dims = 1:30)
@@ -123,5 +131,4 @@ DimPlot(UMAP.integrated.data.by.patient, reduction = "umap", label = TRUE, group
 
 ```{r attempt.at.tutorial} 
 InstallData("panc8")
-
 ```
