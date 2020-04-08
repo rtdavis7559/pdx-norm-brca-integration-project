@@ -74,7 +74,7 @@ norm.brca.pdx.anchors <- FindIntegrationAnchors(object.list = norm.brca.pdx.feat
 norm.brca.pdx.integrated <- IntegrateData(anchorset = norm.brca.pdx.anchors, normalization.method = "SCT", 
     verbose = FALSE)
 
-save(norm.brca.pdx.integrated, file="seurat-objects/norm.brca.pdx.integrated.sctransform.3000features.SeuratObject.Rda")
+save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.integrated.sctransform.3000features.SeuratObject.Rda")
 ```
 
 ##Dimentionality Reduction and Clustering
