@@ -131,4 +131,5 @@ DimPlot(UMAP.integrated.data.by.patient, reduction = "umap", label = TRUE, group
 
 ```{r attempt.at.tutorial} 
 InstallData("panc8")
+.
 ```
