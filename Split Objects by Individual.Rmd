@@ -38,4 +38,3 @@ NormBRCA <- norm.brca.integrated.epithelial
 ```{r split.NormBRCA.by.individual}
 NormBRCA.Split <-SplitObject(NormBRCA, split.by = "individual")
 ```
-
