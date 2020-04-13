@@ -23,8 +23,9 @@ glycolysis <- as.character(Glycolysis)
 ``` {r import.Norm.BRCA.data}
 Norm.BRCA <- load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
-
 ```
 ```{r add.module.score.oxphos}
+#check the default assay and set to RNA if it is not already 
+DefaultAssay(object = Norm.BRCA)
 oxphos.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = oxphos)
 ```
