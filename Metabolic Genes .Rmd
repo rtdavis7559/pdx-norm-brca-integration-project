@@ -11,20 +11,20 @@ library(Seurat)
 
 ```{r import.lists.of.metabolic.genes.and.configure}
 #import in the txt lists of genes 
-Oxphos <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/oxphos.txt")
+Oxphos <- read.table("gene_lists/oxphos.txt")
 #convert to characters  
-oxphos <- as.character(Oxphos)
+oxphos <- list("OXPHOS" = Oxphos$V1)
 #import in the txt lists of genes 
-Glycolysis <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/glycolysis.txt")
+Glycolysis <- read.table("gene_lists/glycolysis.txt")
 #convert to characters  
-glycolysis <- as.character(Glycolysis)
+glycolysis <- list("Glycolysis" = Glycolysis$V1)
 ```
 
 ``` {r import.Norm.BRCA.data}
-Norm.BRCA <- load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
-
 ```
 ```{r add.module.score.oxphos}
-oxphos.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = oxphos)
+DefaultAssay(Norm.BRCA)<-"RNA"
+oxphos.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = oxphos, name = "OXPHOS_Score")
 ```
