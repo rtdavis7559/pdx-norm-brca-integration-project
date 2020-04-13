@@ -1,0 +1,30 @@
+---
+title: "Metabolic Gene Identification"
+author: "Paige"
+date: "4/13/2020"
+output: html_document
+---
+
+```{r import.libraries}
+library(Seurat)
+```
+
+```{r import.lists.of.metabolic.genes.and.configure}
+#import in the txt lists of genes 
+Oxphos <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/oxphos.txt")
+#convert to characters  
+oxphos <- as.character(Oxphos)
+#import in the txt lists of genes 
+Glycolysis <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/glycolysis.txt")
+#convert to characters  
+glycolysis <- as.character(Glycolysis)
+```
+
+``` {r import.Norm.BRCA.data}
+Norm.BRCA <- load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+Norm.BRCA <- norm.brca.integrated.epithelial
+
+```
+```{r add.module.score.oxphos}
+oxphos.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = oxphos)
+```
