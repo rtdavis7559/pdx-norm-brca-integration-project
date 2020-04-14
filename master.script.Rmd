@@ -18,7 +18,6 @@ library(patchwork)
 ## Load in seurat objects
 
 ```{r load.objects}
-setwd("/Users/ryan/pdx-norm-brca-integration-project")
 #HCI001
 load("seurat-objects/hci001.seurat3.object.Rda")
 #HCI002
@@ -29,15 +28,13 @@ load("seurat-objects/hci010.seurat3.object.Rda")
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
 
-## Subset Norm/BRCA Dataset to Norm/BRCA
+## Set Assay to Counts for all Datasets
 
 ```{r subset.normbrca.dataset}
-#SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
-norm.brca.subset.objects<-SplitObject(Norm.BRCA.integrated,"Compartment")
-
-#We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
-norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
-norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
+DefaultAssay(norm.brca.integrated.epithelial)<-"RNA"
+DefaultAssay(p01.cc.updated)<-"expected.counts"
+DefaultAssay(p02.updated)<-"expected.counts"
+DefaultAssay(p10.updated)<-"expected.counts"
 ```
 
 ## Data Integration - scTransform
@@ -45,7 +42,16 @@ norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```{r sctransform.generate.object.list}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
-sctransform.object.list <- list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.integrated.epithelial)
+norm.brca.epithelial.patients <- SplitObject(norm.brca.integrated.epithelial,"individual")
+
+norm.brca.ind1<-norm.brca.epithelial.patients$ind1
+norm.brca.ind10<-norm.brca.epithelial.patients$ind10
+norm.brca.ind2<-norm.brca.epithelial.patients$ind2
+norm.brca.ind3<-norm.brca.epithelial.patients$ind3
+norm.brca.ind4<-norm.brca.epithelial.patients$ind4
+norm.brca.ind9<-norm.brca.epithelial.patients$ind9
+
+sctransform.object.list<-list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"ind1"=norm.brca.ind1,"ind10"=norm.brca.ind10, "ind2"=norm.brca.ind2,"ind3"=norm.brca.ind3,"ind4"=norm.brca.ind4,"ind9"=norm.brca.ind9)
 ```
 ```{r sctransform.normalize.objects}
 #Conceptually, this workflow is very similar to what we have previously introduced, where we ‘correct’ (or harmonize) log-normalized expression values across datasets. Here, instead, we will harmonize the Pearson residuals that are output from SCTransform.
@@ -74,7 +80,6 @@ norm.brca.pdx.anchors <- FindIntegrationAnchors(object.list = norm.brca.pdx.feat
 norm.brca.pdx.integrated <- IntegrateData(anchorset = norm.brca.pdx.anchors, normalization.method = "SCT", 
     verbose = FALSE)
 
-save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.integrated.sctransform.3000features.SeuratObject.Rda")
 ```
 
 ##Dimentionality Reduction and Clustering
@@ -84,6 +89,8 @@ save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca
 
 norm.brca.pdx.integrated <- RunPCA(norm.brca.pdx.integrated, verbose = FALSE)
 norm.brca.pdx.integrated <- RunUMAP(norm.brca.pdx.integrated, dims = 1:30)
+
+save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 ```
 
 ##Adding MetaData
@@ -116,9 +123,34 @@ Combined_Cell_Type[grep("Unclassified", norm.brca.pdx.integrated$Cell.Type)] <- 
 norm.brca.pdx.integrated[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
 ```
 
+##Update RNA Slot
+
+My PDX data has a slot called RNA, which was my TPM values, while the expected_counts slot contains the count data. In the Norm/BRCA dataset their RNA slot is counts data. I need to transfer the values from @assays$expected.counts to @assays$RNA for my PDX data.
+
+```{r update.rna.slot}
+norm.brca.pdx.integrated@assays$RNA[,grep("HCI",colnames(norm.brca.pdx.integrated@assays$RNA))]<-norm.brca.pdx.integrated@assays$expected.counts[,grep("HCI",colnames(norm.brca.pdx.integrated@assays$expected.counts))]
+
+old.rna.data<-GetAssayData(norm.brca.pdx.integrated[["RNA"]],slot = "counts")
+old.expected.count.data<-GetAssayData(norm.brca.pdx.integrated[["expected.counts"]],slot = "counts")
+
+old.rna.data<-as.matrix(x=old.rna.data)
+old.expected.count.data<-as.matrix(x=old.expected.count.data)
+
+new.rna.data<-old.rna.data
+new.rna.data[which(rownames(new.rna.data)%in%rownames(old.expected.count.data)),grep("HCI",colnames(new.rna.data))]<-old.expected.count.data[which(rownames(old.expected.count.data)%in%rownames(new.rna.data)),grep("HCI",colnames(old.expected.count.data))]
+
+norm.brca.pdx.integrated[["corrected.rna"]]<-CreateAssayObject(counts = new.rna.data)
+
+norm.brca.pdx.integrated<-NormalizeData(
+  norm.brca.pdx.integrated,
+  assay = "corrected.rna")
+```
+
 ##Visualizing Data
 
 ```{r sctransform.visualize}
 DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",pt.size = 0.5)
 DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",split.by = "Combined_Cell_Type", ncol = 2,pt.size = 0.5)
+DefaultAssay(norm.brca.pdx.integrated)<-"corrected.rna"
+FeaturePlot(norm.brca.pdx.integrated,c("KRT14","KRT18","ANKRD30A","SLPI","PHLDA2","BHLHE40"))
 ```
