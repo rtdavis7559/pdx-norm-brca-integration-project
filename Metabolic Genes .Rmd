@@ -11,20 +11,39 @@ library(Seurat)
 
 ```{r import.lists.of.metabolic.genes.and.configure}
 #import in the txt lists of genes 
-Oxphos <- read.table("gene_lists/oxphos.txt")
+Oxphos <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/oxphos.txt")
 #convert to characters  
 oxphos <- list("OXPHOS" = Oxphos$V1)
 #import in the txt lists of genes 
-Glycolysis <- read.table("gene_lists/glycolysis.txt")
+Glycolysis <- read.table("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/gene_lists/glycolysis.txt")
 #convert to characters  
 glycolysis <- list("Glycolysis" = Glycolysis$V1)
-```
+#import txt list of rest of genes 
+library(readr)
+rest_of_genes <- read_csv("gene_lists/rest_of_genes.txt")
+rest <- list("rest_of_genes" = rest_of_genes$V1)
+ ```
 
 ``` {r import.Norm.BRCA.data}
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
 ```
-```{r add.module.score.oxphos}
+```{r add.module.scores}
+#set the DefaultAssay 
 DefaultAssay(Norm.BRCA)<-"RNA"
+#Add scores for the oxphos gene lists
 oxphos.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = oxphos, name = "OXPHOS_Score")
+#Add scores for the glycolysis gene lists
+glycolysis.Norm.BRCA <- AddModuleScore(object = Norm.BRCA, features = glycolysis, name = "Glycolysis_Score")
+
+
+
+FeaturePlot(object = oxphos.Norm.BRCA, features = "OXPHOS_Score1")
+FeaturePlot(object = glycolysis.Norm.BRCA, features = "Glycolysis_Score1")
+
+VlnPlot(oxphos.Norm.BRCA, features = "OXPHOS_Score1", split.by = "individual")
+VlnPlot(glycolysis.Norm.BRCA, features = "Glycolysis_Score1", split.by = "individual")
+
+
+
 ```
