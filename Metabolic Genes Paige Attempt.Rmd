@@ -33,10 +33,10 @@ for(i in colnames(rest_genes_V)){
   mydict[[i]] <- lapply(as.list(rest_genes_V[i]), function(x) x[!x %in% ""])
 }
 
-#make a list for the metabolic pathways and add in dictionary to make list of list 
-metabolism.pathways1 <- list()
+#make a list for the metabolic pathways and add in dictionary to make list of lists 
+metabolism.pathway <- list()
 for(i in colnames(rest_genes_V)){
-  metabolism.pathways[[i]] = mydict[[i]]
+  metabolism.pathway[[i]] = mydict[[i]]
 }
 
 
