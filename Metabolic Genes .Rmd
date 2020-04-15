@@ -175,18 +175,23 @@ ggplot(metabolism.box.plot.matrix.melted,
                                 geom_hline(yintercept = 0,size=1, color="black")+
                                 facet_wrap(~pathway, scales = "free")
 
+metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,4], Norm.BRCA@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
+metabolism.interest.box.plot.matrix.melted<-melt(metabolism.interest.box.plot.matrix)
+colnames(metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
+
+ggplot(metabolism.interest.box.plot.matrix.melted,
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status,
+                                        linetype=individual))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
 
 plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
-plot_grid(plotlist = metabolism.box.plots,ncol = 2)
 
-
-FeaturePlot(object = Norm.BRCA, features = "OXPHOS_Score1")
-FeaturePlot(object = glycolysis.Norm.BRCA, features = "Glycolysis_Score1")
-
-test<-VlnPlot(oxphos.Norm.BRCA, 
-        features = "OXPHOS_Score1",
-        group.by = "Cell.Type",
-        split.by = "Status",
-        pt.size = 0)
 
 ```
