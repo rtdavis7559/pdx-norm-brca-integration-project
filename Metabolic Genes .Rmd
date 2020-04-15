@@ -95,7 +95,41 @@ valine.leucine.isoleucine <- list("valine.leucine.isoleucine" = valine.leucine.i
 #Metabolic Gene List
 metabolism.pathways<-list("Glycolysis_Score"=glycolysis, 
                           "Ox_Phos_Score"=oxphos, 
-                          "Alanine_Aspartate_Glutamate_Score" = alanine.aspartate, "Aminoacyl_tRNA_Biosynthesis_Score" = aminoacyl.tRNA.biosynthesis, "Arachadonic_Acid_Score" = arachadonic.acid, "Arginine_Proline_Score" = arginine.proline, "Ascorbate_Aldarate_Score" = ascorbate.aldarate, "Butanoate_Score"= butanoate, "Citric_Acid_Score" = citric.acid, "Cysteine_Methionine_Score" = cysteine.methionine, "Ester_Lipid_Score" = ester.lipid, "Fatty_Acid_Score" = fatty.acid, "Fructose_Mannose_Score" = fructose.mannose, "Galactose_Score" = galactose, "Glutathione_Score" = glutathione, "Glycerolipid_Score" = glycerolipid, "Glycerophospholipid_Score" = glycerophospholipid, "Glycine_Serine_Threonine_Score" = glycine.serine.threonine, "Glycosaminoglycan_Biosynthesis_Chondroitin_Score" = glycosaminoglycan.biosynthesis.chondroitin, "Glycosaminoglycan_Biosynthesis_Herapan_Score" = glycosaminoglycan.biosynthesis.heparan, "Glycosaminoglycan_Biosynthesis_Keratin_Score" = glycosaminoglycan.biosynthesis.keratin, "Glyoxylate_Dicarboxylate_Score" = glyoxylate.dicarboxylate, "Histidine_Score" = histidine, "Linoleic_Acid_Score" = linoleic.acid, "Lysine_Degradation_Score" = lysine.degredation, "Pentose_Phos_Score" = pentose.phos, "Phenylalanine_Score" = phenylalanine, "Propanoate_Score" = propanoate.metabolism, "Purine_Score" = purine, "Pyrimidine_Score" = pyrimidine, "Pyruvate_Score" = pyruvate, "Sphingolipid_Score" = sphingolipid, "Starch_Sucrose_Score" = starch.sucrose, "Taurine_Hypotaurine_Score" = taurine.hypotaurine, "Tryptophan_Score" = tryptophan, "Tyrosine_Score" = tyrosine, "Valine_Leucine_Isoleucine_Score" = valine.leucine.isoleucine)
+                          "Alanine_Aspartate_Glutamate_Score" = alanine.aspartate, 
+                          "Aminoacyl_tRNA_Biosynthesis_Score" = aminoacyl.tRNA.biosynthesis, 
+                          "Arachadonic_Acid_Score" = arachadonic.acid, 
+                          "Arginine_Proline_Score" = arginine.proline, 
+                          "Ascorbate_Aldarate_Score" = ascorbate.aldarate, 
+                          "Butanoate_Score"= butanoate, 
+                          "Citric_Acid_Score" = citric.acid, 
+                          "Cysteine_Methionine_Score" = cysteine.methionine, 
+                          "Ester_Lipid_Score" = ester.lipid, 
+                          "Fatty_Acid_Score" = fatty.acid, 
+                          "Fructose_Mannose_Score" = fructose.mannose, 
+                          "Galactose_Score" = galactose, 
+                          "Glutathione_Score" = glutathione, 
+                          "Glycerolipid_Score" = glycerolipid, 
+                          "Glycerophospholipid_Score" = glycerophospholipid, 
+                          "Glycine_Serine_Threonine_Score" = glycine.serine.threonine, 
+                          "Glycosaminoglycan_Biosynthesis_Chondroitin_Score" = glycosaminoglycan.biosynthesis.chondroitin, 
+                          "Glycosaminoglycan_Biosynthesis_Herapan_Score" = glycosaminoglycan.biosynthesis.heparan, 
+                          "Glycosaminoglycan_Biosynthesis_Keratin_Score" = glycosaminoglycan.biosynthesis.keratin, 
+                          "Glyoxylate_Dicarboxylate_Score" = glyoxylate.dicarboxylate, 
+                          "Histidine_Score" = histidine, 
+                          "Linoleic_Acid_Score" = linoleic.acid, 
+                          "Lysine_Degradation_Score" = lysine.degredation, 
+                          "Pentose_Phos_Score" = pentose.phos, 
+                          "Phenylalanine_Score" = phenylalanine, 
+                          "Propanoate_Score" = propanoate, 
+                          "Purine_Score" = purine, 
+                          "Pyrimidine_Score" = pyrimidine, 
+                          "Pyruvate_Score" = pyruvate, 
+                          "Sphingolipid_Score" = sphingolipid, 
+                          "Starch_Sucrose_Score" = starch.sucrose, 
+                          "Taurine_Hypotaurine_Score" = taurine.hypotaurine, 
+                          "Tryptophan_Score" = tryptophan, 
+                          "Tyrosine_Score" = tyrosine, 
+                          "Valine_Leucine_Isoleucine_Score" = valine.leucine.isoleucine)
 ```
 
 ```{r import.Norm.BRCA.data}
@@ -123,26 +157,26 @@ for (i in 1:length(metabolism.pathways)){
                     split.by = "Status",
                     pt.size = 0,
                     combine = FALSE)
-  
-  metabolism.box.plot.matrix<-FetchData(Norm.BRCA, 
-                                        c(paste(names(metabolism.pathways[i]),"1",sep = ""),
-                                          "Cell.Type", "Status"))
-  
-  
-  print(head(metabolism.box.plot.matrix))
-  
-  metabolism.box.plots[[i]] <- ggplot(metabolism.box.plot.matrix,
-                                    aes(x=metabolism.box.plot.matrix[,2],
-                                        y=metabolism.box.plot.matrix[,1],
-                                        fill=metabolism.box.plot.matrix[,3]))+
-                                geom_boxplot()+
-                                ggtitle(paste(names(metabolism.pathways[i])))+
-                                xlab("") + ylab("Gene Score")+
-                                theme_classic()+
-                                theme(legend.title = element_blank())
 }
 
- plot_grid(plotlist = metabolism.vln.plots,ncol = 2)
+library(reshape2)
+metabolism.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,33:69])
+metabolism.box.plot.matrix.melted<-melt(metabolism.box.plot.matrix)
+colnames(metabolism.box.plot.matrix.melted)<-c("cell.type","status","pathway","score")
+
+ggplot(metabolism.box.plot.matrix.melted,
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+
+
+plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
 plot_grid(plotlist = metabolism.box.plots,ncol = 2)
 
 
