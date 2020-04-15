@@ -1,0 +1,144 @@
+---
+title: "10X Norm/BRCA and SmartSeq2 TNBC PDX Model Integration"
+author: "Ryan and Paige"
+date: "4/5/2020"
+output: html_document
+---
+
+## Load R packages
+
+```{r load.packages}
+install.packages("Seurat")
+library(Seurat)
+library(dplyr)
+library(reshape2)
+library(SeuratData)
+```
+
+## Load in seurat objects
+
+```{r load.objects}
+#HCI001
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci001.seurat3.object.Rda")
+#HCI002
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci002.seurat3.object.Rda")
+#HCI010
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.seurat3.object.Rda")
+#Norm/BRCA
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+```
+
+## Subset Norm/BRCA Dataset to Norm/BRCA
+
+```{r subset.normbrca.dataset}
+#SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
+norm.brca.subset.objects<-SplitObject(norm.brca.integrated.epithelial,"Compartment")
+
+#We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
+norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
+norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
+```
+```{r check columns and the epithelial subset}
+colnames(norm.brca.epithelial.object@meta.data)
+head(norm.brca.epithelial.object$Compartment)
+```
+## Data Integration - Standard Workflow
+DefaultAssay(norm.brca.epithelial.object) <- "RNA"
+
+```{r standard.workflow.generate.object.list}
+#To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
+#The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
+#first part 
+#Norm.BRCA dataset needs to be on the RNA matrix like the other three PDX model datasets 
+#DefaultAssay(norm.brca.epithelial.object) <- "RNA"
+standard.workflow.object.list <- 
+#list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated)
+list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"norm"=norm.brca.epithelial.object)
+```
+
+```{r set.default.assay.to.expected.counts}
+DefaultAssay(p01.cc.updated) <- "expected.counts"
+DefaultAssay(p02.updated) <- "expected.counts"
+DefaultAssay(p10.updated) <- "expected.counts"
+```
+
+```{r standard.workflow.normalize.objects}
+#Prior to finding anchors, we perform standard preprocessing (log-normalization), and identify variable features individually for each. Note that Seurat v3 implements an improved method for variable feature selection based on a variance stabilizing transformation ("vst")
+for (i in 1:length(standard.workflow.object.list)) {
+    standard.workflow.object.list[[i]] <- NormalizeData(standard.workflow.object.list[[i]], verbose = TRUE)
+    standard.workflow.object.list[[i]] <- FindVariableFeatures(standard.workflow.object.list[[i]], selection.method = "vst", 
+        nfeatures = 2000, verbose = TRUE)
+}
+```
+```{r standard.workflow.find.integration.anchors}
+#Next we find anchors, which are pairwise correspondants between individual cells which originate from the same biological state. These anchors are then used to transfer infromation from one dataset to another
+reference.list <- standard.workflow.object.list
+integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
+```
+```{r standard.workflow.integrate.data}
+#After 
+integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
+save(integrated.data, file = "/Users/paigehalas/Desktop/integrated.data.new")
+```
+
+```{r visualize.integration.matrix}
+#load necessary packages for visualization 
+library(ggplot2)
+library(cowplot)
+library(patchwork)
+
+# switch to integrated assay. The variable features of this assay are automatically
+# set during IntegrateData
+#DefaultAssay(integrated.data) <- "integrated"
+#set Default Assay to be the expected counts 
+DefaultAssay(integrated.data) <- "expected.counts"
+```
+```{r standard.workflow.integration.visualization.clustering}
+scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
+PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
+UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE, group.by = "Combined_Cell_Type")
+```
+
+```{r adding.metadata.column}
+#Generate new list for the dataset type
+Combined_Classification <- list ()
+#Adding the five different classifications to the list 
+Combined_Classification[grep("NORMAL",UMAP.integrated.data$Status)] <- "Normal"
+Combined_Classification[grep("BRCA",UMAP.integrated.data$Status)] <- "BRCA"
+Combined_Classification[grep("HCI001",UMAP.integrated.data$patient.id)] <- "HCI001"
+Combined_Classification[grep("HCI002",UMAP.integrated.data$patient.id)] <- "HCI002"
+Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI010"
+#Add new metadata column 
+UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
+```
+
+```{r combined.cell.type}
+#Generate new list for the cell type
+Combined_Cell_Type <- list()
+#Get the lung and lymph cells from the PDX models that are metastatic
+Combined_Cell_Type[grep("Lung", UMAP.integrated.data$tissue)] <- "Metastatic"
+Combined_Cell_Type[grep("Lymph", UMAP.integrated.data$tissue)] <- "Metastatic"
+#Get the tumor cells from the PDX models that are tumor cells 
+Combined_Cell_Type[grep("Tumor", UMAP.integrated.data$tissue)] <- "Tumor"
+#Get the cell types from Kevins Norm/BRCA dataset 
+Combined_Cell_Type[grep("Basal", UMAP.integrated.data$Cell.Type)] <- "Basal"
+Combined_Cell_Type[grep("Luminal_1", UMAP.integrated.data$Cell.Type)] <- "Luminal_1"
+Combined_Cell_Type[grep("Luminal_2", UMAP.integrated.data$Cell.Type)] <- "Luminal_2"
+Combined_Cell_Type[grep("Unclassified", UMAP.integrated.data$Cell.Type)] <- "Unclassified"
+#Add new column 
+UMAP.integrated.data[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
+```
+
+```{r attempt.to.scale.on.lists}
+#look to scale the integrated data by patient using the new combined classification list to see if this improves the clustering
+scale.integrated.data.by.patient <- ScaleData(UMAP.integrated.data, verbose = TRUE, vars.to.regress = "Combined_Classification")
+PCA.integrated.data.by.patient<- RunPCA(scale.integrated.data.by.patient, npcs = 30, verbose = TRUE)
+UMAP.integrated.data.by.patient <- RunUMAP(PCA.integrated.data.by.patient, reduction = "pca", dims = 1:30)
+DimPlot(UMAP.integrated.data.by.patient, reduction = "umap", label = TRUE, group.by = "Combined_Cell_Type")
+```
+
+```{r attempt.at.tutorial} 
+InstallData("panc8")
+.
+```
