@@ -1,0 +1,106 @@
+---
+title: "Metabolic Gene Identification"
+author: "Paige"
+date: "4/13/2020"
+output: html_document
+---
+
+```{r import.libraries}
+library(Seurat)
+library(ggplot2)
+library(cowplot)
+```
+
+```{r import.lists.of.metabolic.genes.and.configure}
+#import in the txt lists of genes 
+Oxphos <- read.table("gene_lists/oxphos.txt")
+#convert to characters  
+oxphos <- list("OXPHOS" = Oxphos$V1)
+#import in the txt lists of genes 
+Glycolysis <- read.table("gene_lists/glycolysis.txt")
+#convert to characters  
+glycolysis <- list("Glycolysis" = Glycolysis$V1)
+#import rest of genes 
+#install the dict package from github to create a dictionary 
+#if (!require("devtools")) install.packages("devtools")
+#devtools::install_github("mkuhn/dict")
+#load the dict library 
+library(dict)
+#name your dictionary 
+mydict <- dict()
+#for loop to make each column a list
+for(i in colnames(rest_genes_V)){
+  mydict[[i]] <- lapply(as.list(rest_genes_V[i]), function(x) x[!x %in% ""])
+}
+
+#make a list for the metabolic pathways and add in dictionary to make list of list 
+metabolism.pathways1 <- list()
+for(i in colnames(rest_genes_V)){
+  metabolism.pathways[[i]] = mydict[[i]]
+}
+
+
+#Metabolic Gene List
+#metabolism.pathways<-list("Glycolysis_Score"=glycolysis, 
+                          #"OXPHOS_Score"=oxphos
+                         # )
+```
+
+```{r import.Norm.BRCA.data}
+load("seurat-objects/norm.brca.integrated.epithelial.Rda")
+Norm.BRCA <- norm.brca.integrated.epithelial
+```
+```{r add.module.scores}
+#set the DefaultAssay 
+DefaultAssay(Norm.BRCA)<-"RNA"
+
+#Add scores and plotting for the metabolism gene lists via a for loop
+metabolism.vln.plots<-list()
+metabolism.box.plots<-list()
+for (i in 1:length(metabolism.pathways)){
+  Norm.BRCA <- AddModuleScore(object = Norm.BRCA,
+                              features = metabolism.pathways[[i]],
+                              name = paste(names(metabolism.pathways[i])),
+                              assay = "RNA")
+  
+  print(paste("Calculating",names(metabolism.pathways[i])))
+  
+  metabolism.vln.plots[i] <- VlnPlot(object = Norm.BRCA,
+                    features = paste(names(metabolism.pathways[i]),"1",sep = ""),
+                    group.by = "Cell.Type",
+                    split.by = "Status",
+                    pt.size = 0,
+                    combine = FALSE)
+  
+  metabolism.box.plot.matrix<-FetchData(Norm.BRCA, 
+                                        c(paste(names(metabolism.pathways[i]),"1",sep = ""),
+                                          "Cell.Type", "Status"))
+  
+  
+  print(head(metabolism.box.plot.matrix))
+  
+  metabolism.box.plots[[i]] <- ggplot(metabolism.box.plot.matrix,
+                                    aes(x=metabolism.box.plot.matrix[,2],
+                                        y=metabolism.box.plot.matrix[,1],
+                                        fill=metabolism.box.plot.matrix[,3]))+
+                                geom_boxplot()+
+                                ggtitle(paste(names(metabolism.pathways[i])))+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())
+}
+
+plot_grid(plotlist = metabolism.vln.plots,ncol = 2)
+plot_grid(plotlist = metabolism.box.plots,ncol = 2)
+
+
+FeaturePlot(object = Norm.BRCA, features = "OXPHOS_Score1")
+FeaturePlot(object = glycolysis.Norm.BRCA, features = "Glycolysis_Score1")
+
+test<-VlnPlot(oxphos.Norm.BRCA, 
+        features = "OXPHOS_Score1",
+        group.by = "Cell.Type",
+        split.by = "Status",
+        pt.size = 0)
+
+```
