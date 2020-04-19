@@ -11,8 +11,6 @@ library(ggplot2)
 library(cowplot)
 ```
 
-##Import Metabolic Gene Lists
-
 ```{r import.lists.of.metabolic.genes.and.configure}
 #import in the txt lists of genes 
 Oxphos <- read.table("gene_lists/oxphos.txt")
@@ -134,15 +132,10 @@ metabolism.pathways<-list("Glycolysis_Score"=glycolysis,
                           "Valine_Leucine_Isoleucine_Score" = valine.leucine.isoleucine)
 ```
 
-##Load in Seurat Object
-
 ```{r import.Norm.BRCA.data}
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
 ```
-
-##Calculate and Add Module Scores
-
 ```{r add.module.scores}
 #set the DefaultAssay 
 DefaultAssay(Norm.BRCA)<-"RNA"
@@ -182,6 +175,21 @@ ggplot(metabolism.box.plot.matrix.melted,
                                 geom_hline(yintercept = 0,size=1, color="black")+
                                 facet_wrap(~pathway, scales = "free")
 
+#plot and color by cell type
+ggplot(metabolism.box.plot.matrix.melted,
+                                    aes(x=status,
+                                        y=score,
+                                        fill=cell.type))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+
+
+
+
 metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,4], Norm.BRCA@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
 metabolism.interest.box.plot.matrix.melted<-melt(metabolism.interest.box.plot.matrix)
 colnames(metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
@@ -199,58 +207,24 @@ ggplot(metabolism.interest.box.plot.matrix.melted,
                                 facet_wrap(~pathway, scales = "free")
 
 plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
-```
 
-##Add 10X Chemistry Meta Data
-
-```{r add.meta.data}
-chemistry.meta.data<-list()
-chemistry.meta.data[1:nrow(Norm.BRCA@meta.data)]<-"10X V2"
-chemistry.meta.data[grep("ind1",Norm.BRCA@meta.data$individual)]<-"10X V1"
-chemistry.meta.data[grep("ind2",Norm.BRCA@meta.data$individual)]<-"10X V1"
-chemistry.meta.data<-as.character(chemistry.meta.data)
-
-Norm.BRCA[["chemistry"]]<-chemistry.meta.data
-
-metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], 
-                                            Norm.BRCA@meta.data[,8], 
-                                            Norm.BRCA@meta.data[,4],
-                                            Norm.BRCA@meta.data$chemistry,
-                                            Norm.BRCA@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
-metabolism.interest.box.plot.matrix.melted<-melt(metabolism.interest.box.plot.matrix)
-colnames(metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","chemistry","pathway","score")
-
-ggplot(metabolism.interest.box.plot.matrix.melted,
-                                    aes(x=cell.type,
+#do this for cell type with just glycolysis and OXphos
+ct.metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,4], Norm.BRCA@meta.data[,c(33,34)])
+ct.metabolism.interest.box.plot.matrix.melted<-melt(ct.metabolism.interest.box.plot.matrix)
+colnames(ct.metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
+#plot just the glycolysis and oxphos datapoints 
+ggplot(ct.metabolism.interest.box.plot.matrix.melted,
+                                    aes(x=status,
                                         y=score,
-                                        fill=chemistry))+
+                                        fill=cell.type,
+                                        linetype=individual))+
                                 geom_boxplot()+
                                 xlab("") + ylab("Gene Score")+
                                 theme_classic()+
                                 theme(legend.title = element_blank())+
                                 geom_hline(yintercept = 0,size=1, color="black")+
                                 facet_wrap(~pathway, scales = "free")
-```
 
-##Calculate % Genes Expressed by Individual and by Chemistry
 
-```{r calculate.percent}
-
-overall.metabolism.percent<-list()
-for (i in 1:length(metabolism.pathways)){
-              
-    overall.metabolism.percent[i]<-(length(which(rownames(Norm.BRCA)%in%metabolism.pathways[[i]][[1]]))/length(metabolism.pathways[[i]][[1]]))
-    
-  } 
-names(overall.metabolism.percent)<-names(metabolism.pathways)
-
-v1.chemistry.cols<-colnames(Norm.BRCA)[grep("10X V1", Norm.BRCA@meta.data$chemistry)]
-v2.chemistry.cols<-colnames(Norm.BRCA)[grep("10X V2", Norm.BRCA@meta.data$chemistry)]
-
-counts.matrix<-GetAssayData(Norm.BRCA,assay = "RNA")
-counts.matrix<-as.matrix(counts.matrix)
-
-v1.matrix<-counts.matrix[,v1.chemistry.cols]
-v2.matrix<-counts.matrix[,v2.chemistry.cols]
 
 ```

@@ -79,6 +79,7 @@ integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims
 #After 
 integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
 save(integrated.data, file = "/Users/paigehalas/Desktop/integrated.data.new")
+integrated.data <- load("/Users/paigehalas/Desktop/integrated.data.new")
 ```
 
 ```{r visualize.integration.matrix}

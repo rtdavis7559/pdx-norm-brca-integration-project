@@ -9,98 +9,137 @@ output: html_document
 library(Seurat)
 library(ggplot2)
 library(cowplot)
-```
-
-```{r import.lists.of.metabolic.genes.and.configure}
-#import in the txt lists of genes 
-Oxphos <- read.table("gene_lists/oxphos.txt")
-#convert to characters  
-oxphos <- list("OXPHOS" = Oxphos$V1)
-#import in the txt lists of genes 
-Glycolysis <- read.table("gene_lists/glycolysis.txt")
-#convert to characters  
-glycolysis <- list("Glycolysis" = Glycolysis$V1)
-#import rest of genes 
 #install the dict package from github to create a dictionary 
 #if (!require("devtools")) install.packages("devtools")
 #devtools::install_github("mkuhn/dict")
 #load the dict library 
 library(dict)
+#to read in the Excel file 
+library(readxl)
+```
+
+```{r import.list.of.metabolic.genes}
 #name your dictionary 
 mydict <- dict()
-#for loop to make each column a list
+#prepare an excel file of all the genes where every column is a pathway name and its respective list of genes 
+#import list
+rest_genes_V <- read_excel("~/Documents/UCI Grad School/CMB PhD Year 1/Lawson Lab/rest_genes_V.xlsx")
+#convert list of genes into characters 
+rest_genes_V <- as.character(rest_genes_V)
+```
+
+```{r configure.excel.to.make.lists}
+#for loop to make add to the dictionary where the pathway is the key and the value is the list of genes in that pathway: i.e. Oxphos is the key and its genes are the value
 for(i in colnames(rest_genes_V)){
   mydict[[i]] <- lapply(as.list(rest_genes_V[i]), function(x) x[!x %in% ""])
 }
 
-#make a list for the metabolic pathways and add in dictionary to make list of lists 
-metabolism.pathway <- list()
-for(i in colnames(rest_genes_V)){
-  metabolism.pathway[[i]] = mydict[[i]]
-}
-
-
-#Metabolic Gene List
-#metabolism.pathways<-list("Glycolysis_Score"=glycolysis, 
-                          #"OXPHOS_Score"=oxphos
-                         # )
 ```
 
 ```{r import.Norm.BRCA.data}
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
 ```
+
 ```{r add.module.scores}
-#set the DefaultAssay 
+#set the DefaultAssay for the Norm.BRCA to be RNA 
 DefaultAssay(Norm.BRCA)<-"RNA"
 
-#Add scores and plotting for the metabolism gene lists via a for loop
-metabolism.vln.plots<-list()
-metabolism.box.plots<-list()
-for (i in 1:length(metabolism.pathways)){
-  Norm.BRCA <- AddModuleScore(object = Norm.BRCA,
-                              features = metabolism.pathways[[i]],
-                              name = paste(names(metabolism.pathways[i])),
-                              assay = "RNA")
-  
-  print(paste("Calculating",names(metabolism.pathways[i])))
-  
-  metabolism.vln.plots[i] <- VlnPlot(object = Norm.BRCA,
-                    features = paste(names(metabolism.pathways[i]),"1",sep = ""),
-                    group.by = "Cell.Type",
-                    split.by = "Status",
-                    pt.size = 0,
-                    combine = FALSE)
-  
-  metabolism.box.plot.matrix<-FetchData(Norm.BRCA, 
-                                        c(paste(names(metabolism.pathways[i]),"1",sep = ""),
-                                          "Cell.Type", "Status"))
-  
-  
-  print(head(metabolism.box.plot.matrix))
-  
-  metabolism.box.plots[[i]] <- ggplot(metabolism.box.plot.matrix,
-                                    aes(x=metabolism.box.plot.matrix[,2],
-                                        y=metabolism.box.plot.matrix[,1],
-                                        fill=metabolism.box.plot.matrix[,3]))+
+#loop through the dictionary to calculate the module scores for each key in the dictionary (i.e. each pathway (key) and its genes (values))
+#need to set the object equal to a different variable so it can be seperately tracked
+#in for loop you need to set object equal to itself or else it keeps writing itself over and not adding to the metadata as it calculates module scoring
+x=Norm.BRCA
+for (i in (mydict$keys())){
+  print(i)
+  x <- AddModuleScore(object = x,
+                              features = mydict[[i]],
+                              name = i,
+                             assay = "RNA")
+                         
+}
+#print(paste("Calculating",names(metabolism.pathway.1[i])))
+```
+
+```{r test.to.see.if.calculation.worked}
+#test to see if you can plot one of the metadafeatures 
+VlnPlot(x, features = "Tryptophan.metabolism1", assay = "RNA", group.by = "Cell.Type")
+```
+
+```{r make.a.new.matrix.where.you.are.looking.at.cell.type.status.pathways.and.scores}
+#load required packages
+library(reshape2)
+library(ggplot2)
+#making the new matrix to build box plots off of with all the pathways calculated
+S.metabolism.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,33:69])
+S.metabolism.box.plot.matrix.melted<-melt(S.metabolism.box.plot.matrix)
+#renaming the columns to be interpretible values
+colnames(S.metabolism.box.plot.matrix.melted)<-c("cell.type","status","pathway","score")
+```
+
+```{r plotting.pathway.scores}
+ggplot(S.metabolism.box.plot.matrix.melted,
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status))+
                                 geom_boxplot()+
-                                ggtitle(paste(names(metabolism.pathways[i])))+
                                 xlab("") + ylab("Gene Score")+
                                 theme_classic()+
-                                theme(legend.title = element_blank())
-}
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+```
 
-plot_grid(plotlist = metabolism.vln.plots,ncol = 2)
-plot_grid(plotlist = metabolism.box.plots,ncol = 2)
+```{r plotting.based.on.color.and.cell.type }
+#plot and color by cell type
+ggplot(S.metabolism.box.plot.matrix.melted,
+                                    aes(x=status,
+                                        y=score,
+                                        fill=cell.type))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+```
 
+``` {r.plotting.only.boxplots.of.pathways.of.interest}
+#making a new box plot matrix with only relevent pathways 
+S.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
+#melting matrix together
+S.metabolism.interest.box.plot.matrix.melted<-melt(S.metabolism.interest.box.plot.matrix)
+#renaming columns in new matrix
+colnames(S.metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
 
-FeaturePlot(object = Norm.BRCA, features = "OXPHOS_Score1")
-FeaturePlot(object = glycolysis.Norm.BRCA, features = "Glycolysis_Score1")
+#plotting matrix with pathways of interest
+ggplot(S.metabolism.interest.box.plot.matrix.melted,
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status,
+                                        linetype=individual))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
 
-test<-VlnPlot(oxphos.Norm.BRCA, 
-        features = "OXPHOS_Score1",
-        group.by = "Cell.Type",
-        split.by = "Status",
-        pt.size = 0)
+plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
 
+#do this for cell type with just glycolysis and Oxphos
+ct.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,34)])
+ct.metabolism.interest.box.plot.matrix.melted<-melt(ct.metabolism.interest.box.plot.matrix)
+colnames(ct.metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
+#plot just the glycolysis and oxphos datapoints 
+ggplot(ct.metabolism.interest.box.plot.matrix.melted,
+                                    aes(x=status,
+                                        y=score,
+                                        fill=cell.type,
+                                        linetype=individual))+
+                                geom_boxplot()+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
 ```
