@@ -19,11 +19,11 @@ library(patchwork)
 
 ```{r load.objects}
 #HCI001
-load("seurat-objects/hci001.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
-load("seurat-objects/hci002.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci002.expected.counts.trimmed.seurat3.object.Rda")
 #HCI010
-load("seurat-objects/hci010.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
@@ -32,9 +32,9 @@ load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 
 ```{r subset.normbrca.dataset}
 DefaultAssay(norm.brca.integrated.epithelial)<-"RNA"
-DefaultAssay(p01.cc.updated)<-"expected.counts"
-DefaultAssay(p02.updated)<-"expected.counts"
-DefaultAssay(p10.updated)<-"expected.counts"
+DefaultAssay(p01.counts)<-"RNA"
+DefaultAssay(p02.counts)<-"RNA"
+DefaultAssay(p10.counts)<-"RNA"
 ```
 
 ## Data Integration - scTransform
@@ -51,7 +51,7 @@ norm.brca.ind3<-norm.brca.epithelial.patients$ind3
 norm.brca.ind4<-norm.brca.epithelial.patients$ind4
 norm.brca.ind9<-norm.brca.epithelial.patients$ind9
 
-sctransform.object.list<-list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated,"ind1"=norm.brca.ind1,"ind10"=norm.brca.ind10, "ind2"=norm.brca.ind2,"ind3"=norm.brca.ind3,"ind4"=norm.brca.ind4,"ind9"=norm.brca.ind9)
+sctransform.object.list<-list("hci001"=p01.counts,"hci002"=p02.counts,"hci010"=p10.counts,"ind1"=norm.brca.ind1,"ind10"=norm.brca.ind10, "ind2"=norm.brca.ind2,"ind3"=norm.brca.ind3,"ind4"=norm.brca.ind4,"ind9"=norm.brca.ind9)
 ```
 ```{r sctransform.normalize.objects}
 #Conceptually, this workflow is very similar to what we have previously introduced, where we ‘correct’ (or harmonize) log-normalized expression values across datasets. Here, instead, we will harmonize the Pearson residuals that are output from SCTransform.
@@ -77,14 +77,15 @@ norm.brca.pdx.features.list.3000 <- PrepSCTIntegration(object.list = sctransform
 
 norm.brca.pdx.anchors <- FindIntegrationAnchors(object.list = norm.brca.pdx.features.list.3000, normalization.method = "SCT", 
     anchor.features = norm.brca.pdx.features.3000, verbose = FALSE)
+memory.size(max = TRUE)
 norm.brca.pdx.integrated <- IntegrateData(anchorset = norm.brca.pdx.anchors, normalization.method = "SCT", 
     verbose = FALSE)
 
 ```
 
-##Dimentionality Reduction and Clustering
+##Dimentionality Reduction
 
-```{r }
+```{r sctransform.dim.reduction}
 #Now proceed with downstream analysis (i.e. visualization, clustering) on the integrated dataset. Commands are identical to the standard workflow, but do not run the ScaleData function after integration. You can see that after integration, cells group by their biological cell type (which has been pre-annotated), instead of by their underlying technology.
 
 norm.brca.pdx.integrated <- RunPCA(norm.brca.pdx.integrated, verbose = FALSE)
@@ -96,24 +97,26 @@ save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca
 ##Adding MetaData
 
 ```{r add.meta.data}
+head(norm.brca.pdx.integrated@meta.data)
 #Generate new list for the dataset type
 combined_status <- list ()
 #Adding the five different classifications to the list 
 combined_status[grep("NORMAL",norm.brca.pdx.integrated$Status)] <- "Normal"
 combined_status[grep("BRCA",norm.brca.pdx.integrated$Status)] <- "BRCA"
-combined_status[grep("HCI001",norm.brca.pdx.integrated$patient.id)] <- "HCI001"
-combined_status[grep("HCI002",norm.brca.pdx.integrated$patient.id)] <- "HCI002"
-combined_status[grep("HCI010",norm.brca.pdx.integrated$patient.id)] <- "HCI010"
+combined_status[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
+combined_status[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
+#Get the tumor cells from the PDX models that are tumor cells 
+combined_status[grep("T", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
 #Add new metadata column 
 norm.brca.pdx.integrated[["combined_status"]] <- as.character(combined_status)
 
 #Generate new list for the cell type
 Combined_Cell_Type <- list()
 #Get the lung and lymph cells from the PDX models that are metastatic
-Combined_Cell_Type[grep("Lung", norm.brca.pdx.integrated$tissue)] <- "Metastatic"
-Combined_Cell_Type[grep("Lymph", norm.brca.pdx.integrated$tissue)] <- "Metastatic"
+Combined_Cell_Type[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
+Combined_Cell_Type[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
 #Get the tumor cells from the PDX models that are tumor cells 
-Combined_Cell_Type[grep("Tumor", norm.brca.pdx.integrated$tissue)] <- "Tumor"
+Combined_Cell_Type[grep("PT", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
 #Get the cell types from Kevins Norm/BRCA dataset 
 Combined_Cell_Type[grep("Basal", norm.brca.pdx.integrated$Cell.Type)] <- "Basal"
 Combined_Cell_Type[grep("Luminal_1", norm.brca.pdx.integrated$Cell.Type)] <- "Luminal_1"
@@ -123,34 +126,13 @@ Combined_Cell_Type[grep("Unclassified", norm.brca.pdx.integrated$Cell.Type)] <- 
 norm.brca.pdx.integrated[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
 ```
 
-##Update RNA Slot
-
-My PDX data has a slot called RNA, which was my TPM values, while the expected_counts slot contains the count data. In the Norm/BRCA dataset their RNA slot is counts data. I need to transfer the values from @assays$expected.counts to @assays$RNA for my PDX data.
-
-```{r update.rna.slot}
-norm.brca.pdx.integrated@assays$RNA[,grep("HCI",colnames(norm.brca.pdx.integrated@assays$RNA))]<-norm.brca.pdx.integrated@assays$expected.counts[,grep("HCI",colnames(norm.brca.pdx.integrated@assays$expected.counts))]
-
-old.rna.data<-GetAssayData(norm.brca.pdx.integrated[["RNA"]],slot = "counts")
-old.expected.count.data<-GetAssayData(norm.brca.pdx.integrated[["expected.counts"]],slot = "counts")
-
-old.rna.data<-as.matrix(x=old.rna.data)
-old.expected.count.data<-as.matrix(x=old.expected.count.data)
-
-new.rna.data<-old.rna.data
-new.rna.data[which(rownames(new.rna.data)%in%rownames(old.expected.count.data)),grep("HCI",colnames(new.rna.data))]<-old.expected.count.data[which(rownames(old.expected.count.data)%in%rownames(new.rna.data)),grep("HCI",colnames(old.expected.count.data))]
-
-norm.brca.pdx.integrated[["corrected.rna"]]<-CreateAssayObject(counts = new.rna.data)
-
-norm.brca.pdx.integrated<-NormalizeData(
-  norm.brca.pdx.integrated,
-  assay = "corrected.rna")
-```
-
 ##Visualizing Data
 
 ```{r sctransform.visualize}
-DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",pt.size = 0.5)
+DefaultAssay(norm.brca.pdx.integrated)<-"RNA"
+norm.brca.pdx.integrated<-NormalizeData(norm.brca.pdx.integrated,verbose = FALSE)
+DimPlot(norm.brca.pdx.integrated,pt.size = 0.5)
 DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",split.by = "Combined_Cell_Type", ncol = 2,pt.size = 0.5)
 DefaultAssay(norm.brca.pdx.integrated)<-"corrected.rna"
-FeaturePlot(norm.brca.pdx.integrated,c("KRT14","KRT18","ANKRD30A","SLPI","PHLDA2","BHLHE40"))
+VlnPlot(norm.brca.pdx.integrated,c("KRT14","KRT18","ANKRD30A","SLPI","PHLDA2","BHLHE40"),group.by = "combined_status", pt.size = 0)
 ```
