@@ -19,11 +19,11 @@ library(patchwork)
 
 ```{r load.objects}
 #HCI001
-load("seurat-objects/hci001.seurat3.object.Rda")
+load("seurat-objects/hci001.counts.trimmed.seurat3.object.Rda")
 #HCI002
-load("seurat-objects/hci002.seurat3.object.Rda")
+load("seurat-objects/hci002.counts.trimmed.seurat3.object.Rda")
 #HCI010
-load("seurat-objects/hci010.seurat3.object.Rda")
+load("seurat-objects/hci010.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
