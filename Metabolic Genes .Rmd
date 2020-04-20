@@ -9,6 +9,7 @@ output: html_document
 library(Seurat)
 library(ggplot2)
 library(cowplot)
+library(dplyr)
 ```
 
 ```{r import.lists.of.metabolic.genes.and.configure}
@@ -158,7 +159,9 @@ for (i in 1:length(metabolism.pathways)){
                     pt.size = 0,
                     combine = FALSE)
 }
+```
 
+```{r plotting.module.scores}
 library(reshape2)
 metabolism.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,33:69])
 metabolism.box.plot.matrix.melted<-melt(metabolism.box.plot.matrix)
@@ -187,19 +190,17 @@ ggplot(metabolism.box.plot.matrix.melted,
                                 geom_hline(yintercept = 0,size=1, color="black")+
                                 facet_wrap(~pathway, scales = "free")
 
-
-
-
+#Plot metabolic pathways of interest by individual
 metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,4], Norm.BRCA@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
 metabolism.interest.box.plot.matrix.melted<-melt(metabolism.interest.box.plot.matrix)
 colnames(metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
 
-ggplot(metabolism.interest.box.plot.matrix.melted,
+ggplot(subset(metabolism.interest.box.plot.matrix.melted,cell.type!="Unclassified"),
                                     aes(x=cell.type,
                                         y=score,
                                         fill=status,
-                                        linetype=individual))+
-                                geom_boxplot()+
+                                        color=individual))+
+                                geom_boxplot(outlier.size = 0.5)+
                                 xlab("") + ylab("Gene Score")+
                                 theme_classic()+
                                 theme(legend.title = element_blank())+
@@ -218,7 +219,7 @@ ggplot(ct.metabolism.interest.box.plot.matrix.melted,
                                         y=score,
                                         fill=cell.type,
                                         linetype=individual))+
-                                geom_boxplot()+
+                                geom_boxplot(outlier.size = 0.5)+
                                 xlab("") + ylab("Gene Score")+
                                 theme_classic()+
                                 theme(legend.title = element_blank())+
@@ -226,5 +227,73 @@ ggplot(ct.metabolism.interest.box.plot.matrix.melted,
                                 facet_wrap(~pathway, scales = "free")
 
 
+
+```
+
+##Add 10X Chemistry Meta Data and Visualize
+
+```{r add.chemistry.meta.data}
+Norm.BRCA[["chemistry"]]<-Norm.BRCA@meta.data$individual
+Norm.BRCA@meta.data <- mutate(Norm.BRCA@meta.data, chemistry = ifelse(individual == "ind1", "V1", ifelse(individual == "ind2", "V1", "V2")))
+
+#Plot metabolic pathways of interest by chemistry
+metabolism.interest.box.plot.matrix<- cbind(Norm.BRCA@meta.data[,13], Norm.BRCA@meta.data[,8], Norm.BRCA@meta.data[,4],Norm.BRCA@meta.data$chemistry, Norm.BRCA@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
+metabolism.interest.box.plot.matrix.melted<-melt(metabolism.interest.box.plot.matrix)
+colnames(metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","chemistry", "pathway","score")
+
+#V2 Chemistry Only
+ggplot(subset(subset(metabolism.interest.box.plot.matrix.melted,cell.type!="Unclassified"),chemistry!="V1"),
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status,
+                                        color=individual))+
+                                geom_boxplot(outlier.size = 0.5)+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+
+#V1 Chemistry Only
+ggplot(subset(subset(metabolism.interest.box.plot.matrix.melted,cell.type!="Unclassified"),chemistry!="V2"),
+                                    aes(x=cell.type,
+                                        y=score,
+                                        fill=status,
+                                        color=individual))+
+                                geom_boxplot(outlier.size = 0.5)+
+                                xlab("") + ylab("Gene Score")+
+                                theme_classic()+
+                                theme(legend.title = element_blank())+
+                                geom_hline(yintercept = 0,size=1, color="black")+
+                                facet_wrap(~pathway, scales = "free")
+```
+
+##Volcano Plots for Metabolic Pathways
+
+```{r volcano.plot.metabolic.pathways}
+metabolism.volcano.matrix<- cbind(Norm.BRCA@meta.data$Cell.Type, Norm.BRCA@meta.data$Status, Norm.BRCA@meta.data$chemistry, Norm.BRCA@meta.data$individual, Norm.BRCA@meta.data[,33:69])
+metabolism.volcano.matrix.melt<-melt(metabolism.volcano.matrix)
+colnames(metabolism.volcano.matrix.melt)<-c("cell.type","status","chemistry","individual","pathway","score")
+
+#Remove Unclassified Cells
+metabolism.volcano.matrix.melt<-subset(metabolism.volcano.matrix.melt,cell.type!="Unclassified")
+
+metabolism.volcano.matrix.melt.average<-aggregate(metabolism.volcano.matrix.melt,list(cell.type = metabolism.volcano.matrix.melt$cell.type, status = metabolism.volcano.matrix.melt$status, pathway = metabolism.volcano.matrix.melt$pathway, individual = metabolism.volcano.matrix.melt$individual), mean)
+
+metabolism.volcano.matrix.melt.average<-metabolism.volcano.matrix.melt.average[,-c(5:9)]
+
+metabolism.volcano.matrix.melt.average.brca<-subset(metabolism.volcano.matrix.melt.average,status!="NORMAL")
+metabolism.volcano.matrix.melt.average.normal<-subset(metabolism.volcano.matrix.melt.average,status!="BRCA")
+
+metabolism.volcano.matrix.brca<-dcast(metabolism.volcano.matrix.melt.average.brca, cell.type+individual~pathway,mean)
+metabolism.volcano.matrix.normal<-dcast(metabolism.volcano.matrix.melt.average.normal, cell.type+individual~pathway,mean)
+
+metabolism.volcano.matrix.brca.basal<-metabolism.volcano.matrix.brca[grep("Basal",metabolism.volcano.matrix.brca$cell.type),]
+metabolism.volcano.matrix.brca.luminal1<-metabolism.volcano.matrix.brca[grep("Luminal_1",metabolism.volcano.matrix.brca$cell.type),]
+metabolism.volcano.matrix.brca.luminal2<-metabolism.volcano.matrix.brca[grep("Luminal_2",metabolism.volcano.matrix.brca$cell.type),]
+
+
+rownames(metabolism.volcano.matrix.brca)<-metabolism.volcano.matrix.brca$cell.type
+rownames(metabolism.volcano.matrix.normal)<-metabolism.volcano.matrix.normal$cell.type
 
 ```
