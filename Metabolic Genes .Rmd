@@ -268,7 +268,85 @@ ggplot(subset(subset(metabolism.interest.box.plot.matrix.melted,cell.type!="Uncl
                                 facet_wrap(~pathway, scales = "free")
 ```
 
-##Volcano Plots for Metabolic Pathways
+##Volcano Plots for Metabolic Pathways by Cells
+
+```{r volcano.plot.metabolic.pathways}
+metabolism.volcano.matrix.by.cell<- cbind(Norm.BRCA@meta.data$Cell.Type, Norm.BRCA@meta.data$Status, Norm.BRCA@meta.data[,33:69])
+metabolism.volcano.matrix.melt.by.cell<-melt(metabolism.volcano.matrix.by.cell)
+colnames(metabolism.volcano.matrix.melt.by.cell)<-c("cell.type","status","pathway","score")
+
+#Remove Unclassified Cells
+metabolism.volcano.matrix.melt.by.cell<-subset(metabolism.volcano.matrix.melt.by.cell,cell.type!="Unclassified")
+
+metabolism.volcano.matrix.melt.by.cell<-subset(metabolism.volcano.matrix.melt.by.cell,cell.type!="Unclassified")
+
+
+metabolism.volcano.matrix.melt.brca.by.cell<-subset(metabolism.volcano.matrix.melt.by.cell,status!="NORMAL")
+metabolism.volcano.matrix.melt.normal.by.cell<-subset(metabolism.volcano.matrix.melt.by.cell,status!="BRCA")
+
+metabolism.volcano.matrix.melt.brca.basal.by.cell<-subset(metabolism.volcano.matrix.melt.brca.by.cell,cell.type=="Basal")
+metabolism.volcano.matrix.melt.normal.basal.by.cell<-subset(metabolism.volcano.matrix.melt.normal.by.cell,cell.type=="Basal")
+metabolism.volcano.matrix.melt.brca.luminal1.by.cell<-subset(metabolism.volcano.matrix.melt.brca.by.cell,cell.type=="Luminal_1")
+metabolism.volcano.matrix.melt.normal.luminal1.by.cell<-subset(metabolism.volcano.matrix.melt.normal.by.cell,cell.type=="Luminal_1")
+metabolism.volcano.matrix.melt.brca.luminal2.by.cell<-subset(metabolism.volcano.matrix.melt.brca.by.cell,cell.type=="Luminal_2")
+metabolism.volcano.matrix.melt.normal.luminal2.by.cell<-subset(metabolism.volcano.matrix.melt.normal.by.cell,cell.type=="Luminal_2")
+
+metabolism.volcano.matrix.brca.average.by.cell<-dcast(metabolism.volcano.matrix.melt.brca.by.cell, cell.type~pathway,mean)
+metabolism.volcano.matrix.normal.average.by.cell<-dcast(metabolism.volcano.matrix.melt.normal.by.cell, cell.type~pathway,mean)
+
+basal.wilcox.pval.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  pathway<-colnames(metabolism.volcano.matrix.brca.average.by.cell)[i]
+  hold<-wilcox.test(metabolism.volcano.matrix.melt.brca.basal.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.brca.basal.by.cell$pathway)],
+                    metabolism.volcano.matrix.melt.normal.basal.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.normal.basal.by.cell$pathway)])
+  basal.wilcox.pval.by.cell[i-1]<-hold$p.value
+}
+
+luminal1.wilcox.pval.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  pathway<-colnames(metabolism.volcano.matrix.brca.average.by.cell)[i]
+  hold<-wilcox.test(metabolism.volcano.matrix.melt.brca.luminal1.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.brca.luminal1.by.cell$pathway)],
+                    metabolism.volcano.matrix.melt.normal.luminal1.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.normal.luminal1.by.cell$pathway)])
+  luminal1.wilcox.pval.by.cell[i-1]<-hold$p.value
+}
+
+luminal2.wilcox.pval.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  pathway<-colnames(metabolism.volcano.matrix.brca.average.by.cell)[i]
+  hold<-wilcox.test(metabolism.volcano.matrix.melt.brca.luminal2.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.brca.luminal2.by.cell$pathway)],
+                    metabolism.volcano.matrix.melt.normal.luminal2.by.cell$score[grep(pathway,metabolism.volcano.matrix.melt.normal.luminal2.by.cell$pathway)])
+  luminal2.wilcox.pval.by.cell[i-1]<-hold$p.value
+}
+
+basal.avg.diff.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  basal.avg.diff.by.cell[i-1]<-metabolism.volcano.matrix.brca.average.by.cell[1,i]-metabolism.volcano.matrix.normal.average.by.cell[1,i]
+}
+
+luminal1.avg.diff.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  basal.avg.diff.by.cell[i-1]<-metabolism.volcano.matrix.brca.average.by.cell[2,i]-metabolism.volcano.matrix.normal.average.by.cell[2,i]
+}
+
+luminal2.avg.diff.by.cell<-list()
+for (i in 2:ncol(metabolism.volcano.matrix.brca.average.by.cell)){
+  basal.avg.diff.by.cell[i-1]<-metabolism.volcano.matrix.brca.average.by.cell[3,i]-metabolism.volcano.matrix.normal.average.by.cell[3,i]
+}
+
+volcano.plot.basal.matrix.by.cell<-data.frame("pathway"=colnames(metabolism.volcano.matrix.brca.average.by.cell)[2:ncol(metabolism.volcano.matrix.brca.average.by.cell)],
+                                      "avg.diff"=as.numeric(basal.avg.diff.by.cell),
+                                      "pval"=-log10(as.numeric(basal.wilcox.pval.by.cell)))
+volcano.plot.basal.matrix.by.cell<- mutate(volcano.plot.basal.matrix.by.cell, "direction" = ifelse(volcano.plot.basal.matrix.by.cell$avg.diff > 0, "BRCA", "Normal"))
+library(ggrepel)
+ggplot(volcano.plot.basal.matrix.by.cell, aes(x = avg.diff,
+                                      y = pval,
+                                      color = direction))+
+  geom_point()+
+  #geom_label_repel(aes(label = pathway), box.padding   = 0.35, point.padding = 0.5,segment.color = 'grey50')+
+  theme_classic()
+```
+
+##Volcano Plots for Metabolic Pathways by Individual Averages
 
 ```{r volcano.plot.metabolic.pathways}
 metabolism.volcano.matrix<- cbind(Norm.BRCA@meta.data$Cell.Type, Norm.BRCA@meta.data$Status, Norm.BRCA@meta.data$chemistry, Norm.BRCA@meta.data$individual, Norm.BRCA@meta.data[,33:69])
@@ -291,9 +369,50 @@ metabolism.volcano.matrix.normal<-dcast(metabolism.volcano.matrix.melt.average.n
 metabolism.volcano.matrix.brca.basal<-metabolism.volcano.matrix.brca[grep("Basal",metabolism.volcano.matrix.brca$cell.type),]
 metabolism.volcano.matrix.brca.luminal1<-metabolism.volcano.matrix.brca[grep("Luminal_1",metabolism.volcano.matrix.brca$cell.type),]
 metabolism.volcano.matrix.brca.luminal2<-metabolism.volcano.matrix.brca[grep("Luminal_2",metabolism.volcano.matrix.brca$cell.type),]
+metabolism.volcano.matrix.normal.basal<-metabolism.volcano.matrix.normal[grep("Basal",metabolism.volcano.matrix.normal$cell.type),]
+metabolism.volcano.matrix.normal.luminal1<-metabolism.volcano.matrix.normal[grep("Luminal_1",metabolism.volcano.matrix.normal$cell.type),]
+metabolism.volcano.matrix.normal.luminal2<-metabolism.volcano.matrix.normal[grep("Luminal_2",metabolism.volcano.matrix.normal$cell.type),]
 
+basal.wilcox.pval<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.basal)){
+  hold<-wilcox.test(metabolism.volcano.matrix.brca.basal[,i],metabolism.volcano.matrix.normal.basal[,i])
+  basal.wilcox.pval[i-2]<-hold$p.value
+}
 
-rownames(metabolism.volcano.matrix.brca)<-metabolism.volcano.matrix.brca$cell.type
-rownames(metabolism.volcano.matrix.normal)<-metabolism.volcano.matrix.normal$cell.type
+luminal1.wilcox.pval<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.luminal1)){
+  hold<-wilcox.test(metabolism.volcano.matrix.brca.luminal1[,i],metabolism.volcano.matrix.normal.luminal1[,i])
+  luminal1.wilcox.pval[i-2]<-hold$p.value
+}
 
+luminal2.wilcox.pval<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.luminal2)){
+  hold<-wilcox.test(metabolism.volcano.matrix.brca.luminal2[,i],metabolism.volcano.matrix.normal.luminal2[,i])
+  luminal2.wilcox.pval[i-2]<-hold$p.value
+}
+
+basal.avg.diff<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.basal)){
+  basal.avg.diff[i-2]<-mean(metabolism.volcano.matrix.brca.basal[,i])-mean(metabolism.volcano.matrix.normal.basal[,i])
+}
+
+luminal1.avg.diff<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.luminal1)){
+  luminal1.avg.diff[i-2]<-mean(metabolism.volcano.matrix.brca.luminal1[,i])-mean(metabolism.volcano.matrix.normal.luminal1[,i])
+}
+
+luminal2.avg.diff<-list()
+for (i in 3:ncol(metabolism.volcano.matrix.brca.luminal2)){
+  luminal2.avg.diff[i-2]<-mean(metabolism.volcano.matrix.brca.luminal2[,i])-mean(metabolism.volcano.matrix.normal.luminal2[,i])
+}
+
+volcano.plot.basal.matrix<-data.frame("pathway"=colnames(metabolism.volcano.matrix.brca.basal)[3:ncol(metabolism.volcano.matrix.brca.basal)],
+                                      "avg.diff"=as.numeric(basal.avg.diff),
+                                      "pval"=as.numeric(basal.wilcox.pval))
+volcano.plot.basal.matrix<- mutate(volcano.plot.basal.matrix, "direction" = ifelse(volcano.plot.basal.matrix$avg.diff > 0, "BRCA", "Normal"))
+ggplot(volcano.plot.basal.matrix, aes(x = avg.diff,
+                                      y = pval,
+                                      color = direction))+
+  geom_jitter()+
+  theme_classic()
 ```
