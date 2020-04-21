@@ -13,11 +13,12 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(patchwork)
+library(cowplot)
 ```
 
 ## Load in seurat objects
 
-```{r load.objects}
+```{r load.objects, eval = FALSE}
 #HCI001
 load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -30,7 +31,7 @@ load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 
 ## Set Assay to Counts for all Datasets
 
-```{r subset.normbrca.dataset}
+```{r subset.normbrca.dataset, eval = FALSE}
 DefaultAssay(norm.brca.integrated.epithelial)<-"RNA"
 DefaultAssay(p01.counts)<-"RNA"
 DefaultAssay(p02.counts)<-"RNA"
@@ -39,7 +40,7 @@ DefaultAssay(p10.counts)<-"RNA"
 
 ## Data Integration - scTransform
 
-```{r sctransform.generate.object.list}
+```{r sctransform.generate.object.list, eval = FALSE}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
 norm.brca.epithelial.patients <- SplitObject(norm.brca.integrated.epithelial,"individual")
@@ -53,14 +54,14 @@ norm.brca.ind9<-norm.brca.epithelial.patients$ind9
 
 sctransform.object.list<-list("hci001"=p01.counts,"hci002"=p02.counts,"hci010"=p10.counts,"ind1"=norm.brca.ind1,"ind10"=norm.brca.ind10, "ind2"=norm.brca.ind2,"ind3"=norm.brca.ind3,"ind4"=norm.brca.ind4,"ind9"=norm.brca.ind9)
 ```
-```{r sctransform.normalize.objects}
+```{r sctransform.normalize.objects, eval = FALSE}
 #Conceptually, this workflow is very similar to what we have previously introduced, where we ‘correct’ (or harmonize) log-normalized expression values across datasets. Here, instead, we will harmonize the Pearson residuals that are output from SCTransform.
 #First, setup the Seurat object list, and run SCTransform on each object separately
 for (i in 1:length(sctransform.object.list)) {
     sctransform.object.list[[i]] <- SCTransform(sctransform.object.list[[i]], verbose = FALSE)
 }
 ```
-```{r sctransform.feature.selection}
+```{r sctransform.feature.selection, eval = FALSE}
 #Next, select features for downstream integration, and run PrepSCTIntegration, which ensures that all necessary Pearson residuals have been calculated.
 #Running on 3000 selected features (may test others later)
 norm.brca.pdx.features.3000 <- SelectIntegrationFeatures(object.list = sctransform.object.list, 
@@ -72,7 +73,7 @@ norm.brca.pdx.features.list.3000 <- PrepSCTIntegration(object.list = sctransform
                                                   anchor.features = norm.brca.pdx.features.3000, 
                                                   verbose = FALSE)
 ```
-```{r sctransform.integrate}
+```{r sctransform.integrate, eval = FALSE}
 #Next, identify anchors and integrate the datasets. Commands are identical to the standard workflow, but make sure to set normalization.method = 'SCT':
 
 norm.brca.pdx.anchors <- FindIntegrationAnchors(object.list = norm.brca.pdx.features.list.3000, normalization.method = "SCT", 
@@ -85,18 +86,19 @@ norm.brca.pdx.integrated <- IntegrateData(anchorset = norm.brca.pdx.anchors, nor
 
 ##Dimentionality Reduction
 
-```{r sctransform.dim.reduction}
+```{r sctransform.dim.reduction, eval = FALSE}
 #Now proceed with downstream analysis (i.e. visualization, clustering) on the integrated dataset. Commands are identical to the standard workflow, but do not run the ScaleData function after integration. You can see that after integration, cells group by their biological cell type (which has been pre-annotated), instead of by their underlying technology.
 
 norm.brca.pdx.integrated <- RunPCA(norm.brca.pdx.integrated, verbose = FALSE)
 norm.brca.pdx.integrated <- RunUMAP(norm.brca.pdx.integrated, dims = 1:30)
-
-save(norm.brca.pdx.integrated, file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 ```
 
 ##Adding MetaData
 
-```{r add.meta.data}
+```{r add.meta.data, eval = FALSE}
+load(file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
+
+
 head(norm.brca.pdx.integrated@meta.data)
 #Generate new list for the dataset type
 combined_status <- list ()
@@ -106,33 +108,104 @@ combined_status[grep("BRCA",norm.brca.pdx.integrated$Status)] <- "BRCA"
 combined_status[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
 combined_status[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
 #Get the tumor cells from the PDX models that are tumor cells 
-combined_status[grep("T", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
+combined_status[grep("_T_", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
 #Add new metadata column 
 norm.brca.pdx.integrated[["combined_status"]] <- as.character(combined_status)
 
 #Generate new list for the cell type
-Combined_Cell_Type <- list()
-#Get the lung and lymph cells from the PDX models that are metastatic
-Combined_Cell_Type[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
-Combined_Cell_Type[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
-#Get the tumor cells from the PDX models that are tumor cells 
-Combined_Cell_Type[grep("PT", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
-#Get the cell types from Kevins Norm/BRCA dataset 
-Combined_Cell_Type[grep("Basal", norm.brca.pdx.integrated$Cell.Type)] <- "Basal"
-Combined_Cell_Type[grep("Luminal_1", norm.brca.pdx.integrated$Cell.Type)] <- "Luminal_1"
-Combined_Cell_Type[grep("Luminal_2", norm.brca.pdx.integrated$Cell.Type)] <- "Luminal_2"
-Combined_Cell_Type[grep("Unclassified", norm.brca.pdx.integrated$Cell.Type)] <- "Unclassified"
+combined_individual <- list()
+#Get the PDX models from each individual
+combined_individual[grep("HCI001", rownames(norm.brca.pdx.integrated@meta.data))] <- "hci001"
+combined_individual[grep("HCI002", rownames(norm.brca.pdx.integrated@meta.data))] <- "hci002"
+combined_individual[grep("HCI010", rownames(norm.brca.pdx.integrated@meta.data))] <- "hci010"
+#Get the individuals from Kevins Norm/BRCA dataset 
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind1")] <- "ind1"
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind10")] <- "ind10"
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind2")] <- "ind2"
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind3")] <- "ind3"
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind4")] <- "ind4"
+combined_individual[which(norm.brca.pdx.integrated$individual == "ind9")] <- "ind9"
 #Add new column 
-norm.brca.pdx.integrated[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
+norm.brca.pdx.integrated[["combined_individual"]] <- as.character(combined_individual)
+
+#Generate new list for the dataset type
+combined_chemistry <- list ()
+combined_chemistry[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "smartseq2"
+combined_chemistry[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "smartseq2"
+combined_chemistry[grep("_T_", rownames(norm.brca.pdx.integrated@meta.data))] <- "smartseq2"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind1")] <- "10x_v1"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind10")] <- "10x_v2"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind2")] <- "10x_v1"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind3")] <- "10x_v2"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind4")] <- "10x_v2"
+combined_chemistry[which(norm.brca.pdx.integrated$individual == "ind9")] <- "10x_v2"
+#Add new metadata column 
+norm.brca.pdx.integrated[["combined_chemistry"]] <- as.character(combined_chemistry)
+
+#Generate new list for the dataset type
+combined_cell_type <- list ()
+combined_cell_type[grep("LU", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
+combined_cell_type[grep("LN", rownames(norm.brca.pdx.integrated@meta.data))] <- "Metastatic"
+#Get the tumor cells from the PDX models that are tumor cells 
+combined_cell_type[grep("_T_", rownames(norm.brca.pdx.integrated@meta.data))] <- "Tumor"
+combined_cell_type[which(norm.brca.pdx.integrated$Cell.Type == "Basal")] <- "Basal"
+combined_cell_type[which(norm.brca.pdx.integrated$Cell.Type == "Luminal_1")] <- "Luminal 1"
+combined_cell_type[which(norm.brca.pdx.integrated$Cell.Type == "Luminal_2")] <- "Luminal 2"
+combined_cell_type[which(norm.brca.pdx.integrated$Cell.Type == "Unclassified")] <- "Unclassified"
+#Add new metadata column 
+norm.brca.pdx.integrated[["combined_cell_type"]] <- as.character(combined_cell_type)
+
 ```
 
 ##Visualizing Data
 
-```{r sctransform.visualize}
+```{r sctransform.normalize, eval = FALSE}
 DefaultAssay(norm.brca.pdx.integrated)<-"RNA"
 norm.brca.pdx.integrated<-NormalizeData(norm.brca.pdx.integrated,verbose = FALSE)
-DimPlot(norm.brca.pdx.integrated,pt.size = 0.5)
-DimPlot(norm.brca.pdx.integrated, group.by = "combined_status",split.by = "Combined_Cell_Type", ncol = 2,pt.size = 0.5)
-DefaultAssay(norm.brca.pdx.integrated)<-"corrected.rna"
-VlnPlot(norm.brca.pdx.integrated,c("KRT14","KRT18","ANKRD30A","SLPI","PHLDA2","BHLHE40"),group.by = "combined_status", pt.size = 0)
+```
+```{r sctransform.visualize.known.markers}
+VlnPlot(norm.brca.pdx.integrated,c("PHLDA2"),group.by = "combined_individual",split.by="combined_status", pt.size = 0, multi.group = T, assay = "RNA")
+VlnPlot(norm.brca.pdx.integrated,c("BHLHE40"),group.by = "combined_individual",split.by="combined_status", pt.size = 0, multi.group = T, assay = "RNA")
+VlnPlot(norm.brca.pdx.integrated,c("KRT5","KRT14","KRT8","KRT18","SLPI","ANKRD30A"),group.by = "combined_cell_type", pt.size = 0, assay = "RNA",ncol = 2)
+```
+```{r sctransform.visualize.umap}
+plot1<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",split.by = "combined_chemistry", group.by = "combined_chemistry")
+plot2<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",group.by = "combined_individual", split.by = "combined_individual")
+plot3<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",group.by = "combined_status", split.by = "combined_status")
+plot4<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",group.by = "combined_cell_type", split.by = "combined_cell_type")
+
+plot_grid(plot1,plot2,plot3,plot4, ncol = 1)
+```
+
+##Cluster Identification and Marker Genes
+
+```{r sctransform.find.neighbors, eval = FALSE}
+#Switch back to integrated slot for identifying clusters
+#Match 30 PCs to original UMAP clustering
+DefaultAssay(norm.brca.pdx.integrated)<-"integrated"
+norm.brca.pdx.integrated <- FindNeighbors(norm.brca.pdx.integrated, dims = 1:30, verbose = FALSE)
+```
+```{r sctransform.find.clusters, eval = FALSE}
+norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FALSE, resolution = 0.5)
+norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FALSE, resolution = 0.1)
+norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FALSE, resolution = 1)
+```
+```{r sctransform.visualize.clusters}
+plot1<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.1",label = T)
+plot2<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.5",label = T)
+plot3<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.1",label = T)
+plot_grid(plot1,plot2,plot3,ncol = 3)
+```
+```{r sctransform.identify.markers.0.5, eval = FALSE}
+#Find markers for Res 0.5, RNA slot
+Idents(norm.brca.pdx.integrated)<-"integrated_snn_res.0.5"
+norm.brca.pdx.integrated.res0.5.RNA.markers <- FindAllMarkers(norm.brca.pdx.integrated, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "RNA")
+#Need to scale values in RNA slot
+all.genes<-rownames(norm.brca.pdx.integrated@assays$RNA)
+norm.brca.pdx.integrated<-ScaleData(norm.brca.pdx.integrated,features = all.genes,assay = "RNA")
+```
+```{r sctransform.visualize.markers}
+top10 <- norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+DoHeatmap(norm.brca.pdx.integrated, features = top10$gene, assay = "RNA") + NoLegend()
+norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
 ```
