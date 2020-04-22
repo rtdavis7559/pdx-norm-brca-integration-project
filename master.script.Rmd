@@ -7,7 +7,7 @@ output: html_document
 
 ## Load R packages
 
-```{r load.packages}
+```{r load.packages, echo = FALSE}
 library(Seurat)
 library(dplyr)
 library(reshape2)
@@ -18,7 +18,7 @@ library(cowplot)
 
 ## Load in seurat objects
 
-```{r load.objects, eval = FALSE}
+```{r load.objects, eval = FALSE, echo = FALSE}
 #HCI001
 load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -31,7 +31,7 @@ load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 
 ## Set Assay to Counts for all Datasets
 
-```{r subset.normbrca.dataset, eval = FALSE}
+```{r subset.normbrca.dataset, eval = FALSE, echo = FALSE}
 DefaultAssay(norm.brca.integrated.epithelial)<-"RNA"
 DefaultAssay(p01.counts)<-"RNA"
 DefaultAssay(p02.counts)<-"RNA"
@@ -95,7 +95,7 @@ norm.brca.pdx.integrated <- RunUMAP(norm.brca.pdx.integrated, dims = 1:30)
 
 ##Adding MetaData
 
-```{r add.meta.data, eval = FALSE}
+```{r add.meta.data, eval = FALSE, echo = FALSE}
 load(file="E:/Scripts/Seurat/Seurat3_Objects/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 
 
@@ -159,16 +159,19 @@ norm.brca.pdx.integrated[["combined_cell_type"]] <- as.character(combined_cell_t
 
 ##Visualizing Data
 
-```{r sctransform.normalize, eval = FALSE}
+```{r sctransform.normalize, eval = FALSE, echo = FALSE}
 DefaultAssay(norm.brca.pdx.integrated)<-"RNA"
 norm.brca.pdx.integrated<-NormalizeData(norm.brca.pdx.integrated,verbose = FALSE)
 ```
-```{r sctransform.visualize.known.markers}
+```{r sctransform.visualize.known.markers.pdx, fig.height = 4, fig.width=8}
+load(file="E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 VlnPlot(norm.brca.pdx.integrated,c("PHLDA2"),group.by = "combined_individual",split.by="combined_status", pt.size = 0, multi.group = T, assay = "RNA")
 VlnPlot(norm.brca.pdx.integrated,c("BHLHE40"),group.by = "combined_individual",split.by="combined_status", pt.size = 0, multi.group = T, assay = "RNA")
+```
+```{r sctransform.visualize.known.markers.normal, fig.height = 12, fig.width=8}
 VlnPlot(norm.brca.pdx.integrated,c("KRT5","KRT14","KRT8","KRT18","SLPI","ANKRD30A"),group.by = "combined_cell_type", pt.size = 0, assay = "RNA",ncol = 2)
 ```
-```{r sctransform.visualize.umap}
+```{r sctransform.visualize.umap, fig.height = 10, fig.width=10}
 plot1<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",split.by = "combined_chemistry", group.by = "combined_chemistry")
 plot2<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",group.by = "combined_individual", split.by = "combined_individual")
 plot3<-DimPlot(norm.brca.pdx.integrated,reduction = "umap",group.by = "combined_status", split.by = "combined_status")
@@ -190,22 +193,34 @@ norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FAL
 norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FALSE, resolution = 0.1)
 norm.brca.pdx.integrated <- FindClusters(norm.brca.pdx.integrated, verbose = FALSE, resolution = 1)
 ```
-```{r sctransform.visualize.clusters}
-plot1<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.1",label = T)
-plot2<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.5",label = T)
-plot3<-DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.1",label = T)
-plot_grid(plot1,plot2,plot3,ncol = 3)
+```{r sctransform.visualize.clusters.0.1, fig.height = 8, fig.width=8}
+DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.1",label = T, pt.size = 1)
+```
+```{r sctransform.visualize.clusters.0.5, fig.height = 8, fig.width=8}
+DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.0.5",label = T, pt.size = 1)
+```
+```{r sctransform.visualize.clusters.1, fig.height = 8, fig.width=8}
+DimPlot(norm.brca.pdx.integrated, group.by = "integrated_snn_res.1",label = T, pt.size = 1)
 ```
 ```{r sctransform.identify.markers.0.5, eval = FALSE}
 #Find markers for Res 0.5, RNA slot
 Idents(norm.brca.pdx.integrated)<-"integrated_snn_res.0.5"
 norm.brca.pdx.integrated.res0.5.RNA.markers <- FindAllMarkers(norm.brca.pdx.integrated, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "RNA")
+write.table(norm.brca.pdx.integrated.res0.5.RNA.markers, file = "marker_genes/norm.brca.pdx.integrated.res0.5.RNA.markers.txt")
 #Need to scale values in RNA slot
 all.genes<-rownames(norm.brca.pdx.integrated@assays$RNA)
 norm.brca.pdx.integrated<-ScaleData(norm.brca.pdx.integrated,features = all.genes,assay = "RNA")
 ```
 ```{r sctransform.visualize.markers}
+Idents(norm.brca.pdx.integrated)<-"integrated_snn_res.0.5"
+norm.brca.pdx.integrated.res0.5.RNA.markers<-read.table("marker_genes/norm.brca.pdx.integrated.res0.5.RNA.markers.txt")
 top10 <- norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
 DoHeatmap(norm.brca.pdx.integrated, features = top10$gene, assay = "RNA") + NoLegend()
 norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
+```
+
+## Save Seurat Object (Last Saved: 04/21/20)
+
+```{r sctransform.save.object, eval = FALSE}
+#save(norm.brca.pdx.integrated, file="E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 ```
