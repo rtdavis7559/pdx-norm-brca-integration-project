@@ -223,6 +223,24 @@ library(knitr)
 kable(norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC), caption = "Res 0.5 RNA Markers")
 ```
 
+```{r sctransform.identify.PDX.cells.by.cell.type, eval = FALSE}
+#This initial part of the analysis to subset the cells was performed on the Macbook
+DimPlot(norm.brca.pdx.integrated, group.by = "combined_cell_type")
+plot1<-DimPlot(norm.brca.pdx.integrated, group.by = "combined_cell_type")
+#The following lines were performed in the console to select corresponding cells
+norm.brca.pdx.integrated<-CellSelector(plot1, norm.brca.pdx.integrated, ident = "integrated_basal")
+norm.brca.pdx.integrated<-CellSelector(plot1, norm.brca.pdx.integrated, ident = "integrated_luminal1")
+norm.brca.pdx.integrated<-CellSelector(plot1, norm.brca.pdx.integrated, ident = "integrated_luminal2")
+
+#Create new meta.data column for integrated celltypes
+norm.brca.pdx.integrated[["integrated_cell_type"]]<-Idents(norm.brca.pdx.integrated)
+norm.brca.pdx.integrated[["integrated_cell_type_renamed"]]<-norm.brca.pdx.integrated$integrated_cell_type
+levels(norm.brca.pdx.integrated$integrated_cell_type_renamed)<-c("luminal2","luminal1","basal","other","other","other","other","other","other","other","other")
+
+#Save new object and transfer back to PC to rerun integration
+save(norm.brca.pdx.integrated, file = "/Users/ryan/Documents/Raw_Matrices/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
+```
+
 ## Save Seurat Object (Last Saved: 04/21/20)
 
 ```{r sctransform.save.object, eval = FALSE}
