@@ -139,14 +139,14 @@ UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/UMAP.integrated.data.
 
 ##Define cluster markers 
 
-```{r look.at.cluser.markers}
-markers <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-pbmc.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
+```{r look.at.cluser.markers, eval=FALSE}
+#markers <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+#UMAP.integrated.data %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
 ```
 
+##Adding columns for dataset types
 
-
-```{r adding.metadata.column}
+```{r adding.metadata.column, eval=FALSE}
 #Generate new list for the dataset type
 Combined_Classification <- list ()
 #Adding the five different classifications to the list 
@@ -159,7 +159,9 @@ Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI0
 UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
 ```
 
-```{r combined.cell.type}
+##Adding cell types to the dataset
+
+```{r combined.cell.type. eval = FALSE}
 #Generate new list for the cell type
 Combined_Cell_Type <- list()
 #Get the lung and lymph cells from the PDX models that are metastatic
@@ -174,17 +176,4 @@ Combined_Cell_Type[grep("Luminal_2", UMAP.integrated.data$Cell.Type)] <- "Lumina
 Combined_Cell_Type[grep("Unclassified", UMAP.integrated.data$Cell.Type)] <- "Unclassified"
 #Add new column 
 UMAP.integrated.data[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
-```
-
-```{r attempt.to.scale.on.lists}
-#look to scale the integrated data by patient using the new combined classification list to see if this improves the clustering
-scale.integrated.data.by.patient <- ScaleData(UMAP.integrated.data, verbose = TRUE, vars.to.regress = "Combined_Classification")
-PCA.integrated.data.by.patient<- RunPCA(scale.integrated.data.by.patient, npcs = 30, verbose = TRUE)
-UMAP.integrated.data.by.patient <- RunUMAP(PCA.integrated.data.by.patient, reduction = "pca", dims = 1:30)
-DimPlot(UMAP.integrated.data.by.patient, reduction = "umap", label = TRUE, group.by = "Combined_Cell_Type")
-```
-
-```{r attempt.at.tutorial} 
-InstallData("panc8")
-.
 ```
