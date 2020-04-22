@@ -211,12 +211,16 @@ write.table(norm.brca.pdx.integrated.res0.5.RNA.markers, file = "marker_genes/no
 all.genes<-rownames(norm.brca.pdx.integrated@assays$RNA)
 norm.brca.pdx.integrated<-ScaleData(norm.brca.pdx.integrated,features = all.genes,assay = "RNA")
 ```
-```{r sctransform.visualize.markers}
+```{r sctransform.visualize.markers.0.5.heatmap, fig.height=5, fig.width=10}
 Idents(norm.brca.pdx.integrated)<-"integrated_snn_res.0.5"
 norm.brca.pdx.integrated.res0.5.RNA.markers<-read.table("marker_genes/norm.brca.pdx.integrated.res0.5.RNA.markers.txt")
 top10 <- norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
-DoHeatmap(norm.brca.pdx.integrated, features = top10$gene, assay = "RNA") + NoLegend()
-norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
+top10 <- as.character(top10$gene)
+DoHeatmap(norm.brca.pdx.integrated, features = top10, assay = "RNA") + NoLegend()
+```
+```{r sctransform.markers.0.5.table, results = 'asis', echo = FALSE}
+library(knitr)
+kable(norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC), caption = "Res 0.5 RNA Markers")
 ```
 
 ## Save Seurat Object (Last Saved: 04/21/20)
