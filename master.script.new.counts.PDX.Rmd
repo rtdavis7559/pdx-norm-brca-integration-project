@@ -113,7 +113,25 @@ scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
 UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
 DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
+saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
+UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
 ```
+```{r look.at.cluser.markers}
+
+
+```
+
+
+
+
+```{r standard.workflow.integration.visualization.clustering.attempt.to.look.at.nfeature}
+scale.integrated.data <- ScaleData(integrated.data, features = n_Feature_RNA, verbose = TRUE)
+PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
+UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
+saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
+```
+
 
 ```{r adding.metadata.column}
 #Generate new list for the dataset type
