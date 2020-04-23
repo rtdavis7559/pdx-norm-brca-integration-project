@@ -223,7 +223,9 @@ library(knitr)
 kable(norm.brca.pdx.integrated.res0.5.RNA.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC), caption = "Res 0.5 RNA Markers")
 ```
 
-```{r sctransform.identify.PDX.cells.by.cell.type, eval = FALSE}
+## Integrate PDX Cells by Cell Type
+
+```{r sctransform.identify.PDX.cells.by.cell.type, eval = FALSE, echo = FALSE, echo=FALSE}
 #This initial part of the analysis to subset the cells was performed on the Macbook
 DimPlot(norm.brca.pdx.integrated, group.by = "combined_cell_type")
 plot1<-DimPlot(norm.brca.pdx.integrated, group.by = "combined_cell_type")
@@ -238,11 +240,159 @@ norm.brca.pdx.integrated[["integrated_cell_type_renamed"]]<-norm.brca.pdx.integr
 levels(norm.brca.pdx.integrated$integrated_cell_type_renamed)<-c("luminal2","luminal1","basal","other","other","other","other","other","other","other","other")
 
 #Save new object and transfer back to PC to rerun integration
-save(norm.brca.pdx.integrated, file = "/Users/ryan/Documents/Raw_Matrices/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
+#save(norm.brca.pdx.integrated, file = "/Users/ryan/Documents/Raw_Matrices/norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
+```
+```{r sctransform.subset.seurat.objects.cell.type, eval = FALSE, echo=FALSE}
+norm.brca.pdx.list<-SplitObject(norm.brca.pdx.integrated, split.by = "combined_individual")
+hci001<-norm.brca.pdx.list$hci001
+hci002<-norm.brca.pdx.list$hci002
+hci010<-norm.brca.pdx.list$hci010
 ```
 
-## Save Seurat Object (Last Saved: 04/21/20)
+## Integrate PDX cells with Basal Cells
+
+```{r sctransform.subset.norm.brca.basal, eval=FALSE, echo=FALSE}
+ind1<-norm.brca.pdx.list$ind1
+Idents(ind1)<- "integrated_cell_type_renamed"
+ind1.basal<-subset(ind1, idents = "basal")
+
+ind10<-norm.brca.pdx.list$ind10
+Idents(ind10)<- "integrated_cell_type_renamed"
+ind10.basal<-subset(ind10, idents = "basal")
+
+ind2<-norm.brca.pdx.list$ind2
+Idents(ind2)<- "integrated_cell_type_renamed"
+ind2.basal<-subset(ind2, idents = "basal")
+
+ind3<-norm.brca.pdx.list$ind3
+Idents(ind3)<- "integrated_cell_type_renamed"
+ind3.basal<-subset(ind3, idents = "basal")
+
+ind4<-norm.brca.pdx.list$ind4
+Idents(ind4)<- "integrated_cell_type_renamed"
+ind4.basal<-subset(ind4, idents = "basal")
+
+ind9<-norm.brca.pdx.list$ind9
+Idents(ind9)<- "integrated_cell_type_renamed"
+ind9.basal<-subset(ind9, idents = "basal")
+```
+```{r sctransform.integrate.pdx.by.basal, eval = FALSE, echo=FALSE}
+sctransform.object.list.basal<-list("hci001"=hci001,
+                                    "hci002"=hci002,
+                                    "hci010"=hci010,
+                                    "ind1"=ind1.basal,
+                                    "ind10"=ind10.basal,
+                                    "ind2"=ind2.basal,
+                                    "ind3"=ind3.basal,
+                                    "ind4"=ind4.basal,
+                                    "ind9"=ind9.basal)
+
+for (i in 1:length(sctransform.object.list.basal)) {
+    sctransform.object.list.basal[[i]] <- SCTransform(sctransform.object.list.basal[[i]], verbose = FALSE)
+}
+
+norm.brca.pdx.features.3000.basal <- SelectIntegrationFeatures(object.list = sctransform.object.list.basal, 
+                                                         nfeatures = 3000)
+
+options(future.globals.maxSize = (6000*1024^2))
+
+norm.brca.pdx.features.list.3000.basal <- PrepSCTIntegration(object.list = sctransform.object.list.basal, 
+                                                  anchor.features = norm.brca.pdx.features.3000.basal, 
+                                                  verbose = FALSE)
+
+norm.brca.pdx.anchors.basal <- FindIntegrationAnchors(object.list = norm.brca.pdx.features.list.3000.basal, normalization.method = "SCT", 
+    anchor.features = norm.brca.pdx.features.3000.basal, verbose = FALSE)
+
+memory.size(max = TRUE)
+
+norm.brca.pdx.integrated.basal <- IntegrateData(anchorset = norm.brca.pdx.anchors.basal, normalization.method = "SCT", 
+    verbose = FALSE)
+```
+```{r sctransform.integrate.pdx.by.basal.dim.reduce, eval = FALSE, echo=FALSE}
+norm.brca.pdx.integrated.basal <- RunPCA(norm.brca.pdx.integrated.basal, verbose = FALSE)
+norm.brca.pdx.integrated.basal <- RunUMAP(norm.brca.pdx.integrated.basal, dims = 1:30)
+```
+```{r sctransform.integrate.pdx.by.basal.umap.visualize, fig.height=8, fig.width=12}
+load(file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.basal.sctransform.3000features.SeuratObject.Rda")
+plot1<-DimPlot(norm.brca.pdx.integrated.basal,reduction = "umap",split.by = "combined_chemistry", group.by = "combined_chemistry",pt.size = 1)
+plot2<-DimPlot(norm.brca.pdx.integrated.basal,reduction = "umap",split.by = "integrated_cell_type_renamed", group.by = "integrated_cell_type_renamed",pt.size = 1)
+plot_grid(plot1,plot2, ncol = 1)
+```
+
+## Integrate PDX cells with Luminal1 Cells
+
+```{r sctransform.subset.norm.brca.luminal1, eval=FALSE, echo=FALSE}
+ind1<-norm.brca.pdx.list$ind1
+Idents(ind1)<- "integrated_cell_type_renamed"
+ind1.luminal1<-subset(ind1, idents = "luminal1")
+
+ind10<-norm.brca.pdx.list$ind10
+Idents(ind10)<- "integrated_cell_type_renamed"
+ind10.luminal1<-subset(ind10, idents = "luminal1")
+
+ind2<-norm.brca.pdx.list$ind2
+Idents(ind2)<- "integrated_cell_type_renamed"
+ind2.luminal1<-subset(ind2, idents = "luminal1")
+
+ind3<-norm.brca.pdx.list$ind3
+Idents(ind3)<- "integrated_cell_type_renamed"
+ind3.luminal1<-subset(ind3, idents = "luminal1")
+
+ind4<-norm.brca.pdx.list$ind4
+Idents(ind4)<- "integrated_cell_type_renamed"
+ind4.luminal1<-subset(ind4, idents = "luminal1")
+
+ind9<-norm.brca.pdx.list$ind9
+Idents(ind9)<- "integrated_cell_type_renamed"
+ind9.luminal1<-subset(ind9, idents = "luminal1")
+```
+```{r sctransform.integrate.pdx.by.luminal1, eval = FALSE, echo=FALSE}
+sctransform.object.list.luminal1<-list("hci001"=hci001,
+                                    "hci002"=hci002,
+                                    "hci010"=hci010,
+                                    "ind1"=ind1.luminal1,
+                                    "ind10"=ind10.luminal1,
+                                    "ind2"=ind2.luminal1,
+                                    "ind3"=ind3.luminal1,
+                                    "ind4"=ind4.luminal1,
+                                    "ind9"=ind9.luminal1)
+
+for (i in 1:length(sctransform.object.list.luminal1)) {
+    sctransform.object.list.luminal1[[i]] <- SCTransform(sctransform.object.list.luminal1[[i]], verbose = FALSE)
+}
+
+norm.brca.pdx.features.3000.luminal1 <- SelectIntegrationFeatures(object.list = sctransform.object.list.luminal1, 
+                                                         nfeatures = 3000)
+
+options(future.globals.maxSize = (6000*1024^2))
+
+norm.brca.pdx.features.list.3000.luminal1 <- PrepSCTIntegration(object.list = sctransform.object.list.luminal1, 
+                                                  anchor.features = norm.brca.pdx.features.3000.luminal1, 
+                                                  verbose = FALSE)
+
+norm.brca.pdx.anchors.luminal1 <- FindIntegrationAnchors(object.list = norm.brca.pdx.features.list.3000.luminal1, normalization.method = "SCT", 
+    anchor.features = norm.brca.pdx.features.3000.luminal1, verbose = FALSE)
+
+memory.size(max = TRUE)
+
+norm.brca.pdx.integrated.luminal1 <- IntegrateData(anchorset = norm.brca.pdx.anchors.luminal1, normalization.method = "SCT", 
+    verbose = FALSE)
+```
+```{r sctransform.integrate.pdx.by.luminal1.dim.reduce, eval = FALSE, echo=FALSE}
+norm.brca.pdx.integrated.luminal1 <- RunPCA(norm.brca.pdx.integrated.luminal1, verbose = FALSE)
+norm.brca.pdx.integrated.luminal1 <- RunUMAP(norm.brca.pdx.integrated.luminal1, dims = 1:30)
+```
+```{r sctransform.integrate.pdx.by.luminal1.umap.visualize, fig.height=8, fig.width=12}
+load(file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.luminal1.sctransform.3000features.SeuratObject.Rda")
+plot1<-DimPlot(norm.brca.pdx.integrated.luminal1,reduction = "umap",split.by = "combined_chemistry", group.by = "combined_chemistry",pt.size = 1)
+plot2<-DimPlot(norm.brca.pdx.integrated.luminal1,reduction = "umap",split.by = "integrated_cell_type_renamed", group.by = "integrated_cell_type_renamed",pt.size = 1)
+plot_grid(plot1,plot2, ncol = 1)
+```
+
+## Save Seurat Objects (Last Saved: 04/23/20)
 
 ```{r sctransform.save.object, eval = FALSE}
 #save(norm.brca.pdx.integrated, file="E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
+save(norm.brca.pdx.integrated.basal, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.basal.sctransform.3000features.SeuratObject.Rda")
+save(norm.brca.pdx.integrated.luminal1, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.luminal1.sctransform.3000features.SeuratObject.Rda")
 ```
