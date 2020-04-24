@@ -149,7 +149,7 @@ FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
 ```
 
 ## Recalculate the percent mito using the Seurat tutorial 
-```{r look.at.percent.mito}
+```{r look.at.percent.mito,fig.height=4, fig.width=8}
 DefaultAssay(integrated.data) <- "RNA"
 integrated.data[["percent.mt"]] <- PercentageFeatureSet(integrated.data, pattern = "^MT-")
 FeaturePlot(UMAP.integrated.data, features = "percent.mt")
@@ -157,7 +157,7 @@ FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 
 ##Try to rescale the data to account for differences in n_Feature and percent mit 
 
-```{r re.scale.PCA.MAP.data.and.look.at.feature.plots}
+```{r re.scale.PCA.MAP.data.and.look.at.feature.plots,fig.height=4, fig.width=8}
 DefaultAssay(integrated.data) <- "integrated"
 r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c("nFeature_RNA", "percent.mt"))
 r.PCA.integrated.data<- RunPCA(r.scale.integrated.data, npcs = 30, verbose = TRUE)
