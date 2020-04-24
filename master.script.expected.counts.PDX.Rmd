@@ -7,7 +7,7 @@ output: html_document
 
 ## Load R packages
 ##Seurat, dpylr, reshape2, ggplot2, patchwork, cowplot needed
-```{r load.packages, eval=FALSE, echo=FALSE}
+```{r load.packages}
 #install.packages("Seurat")
 library(Seurat)
 library(dplyr)
@@ -107,13 +107,15 @@ integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims
 
 ```{r standard.workflow.integrate.data, eval = FALSE}
 #After 
+#if hitting vector limit issue, open terminal, set cd to home directory, use "open .Renviron" and set the R_MAX_VSIZE=20Gb and save the file, you need to restart R for these changes to be saved 
 integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
-
+#save(integrated.data, file = "/Users/paigehalas/Desktop/integrated.data.Rda")
+load("/Users/paigehalas/Desktop/integrated.data.Rda")
 ```
 
 ## Load Libraries for Visualization of Data
 
-```{r visualize.integration.matrix, echo = FALSE, eval = FALSE}
+```{r visualize.integration.matrix}
 #load necessary packages for visualization 
 library(ggplot2)
 library(cowplot)
@@ -129,7 +131,7 @@ library(patchwork)
 scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
 UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
-#saveRDS(UMAP.indegrated.data, file = "/Users/paigehalas/Desktop")
+#saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
 ```
 
 ## Integration Visualization 
@@ -139,6 +141,11 @@ UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/UMAP.integrated.data.
 DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 ```
 
+## Feature plot for nFeature_RNA to compare PDX cells and Norm/BRCA cells  
+
+```{r look.at.feature.plot.for.nFeature_RNA, fig.height=4, fig.width=8}
+FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
+```
 ## Define cluster markers (this is not finished yet)
 
 ```{r look.at.cluser.markers, eval=FALSE}
