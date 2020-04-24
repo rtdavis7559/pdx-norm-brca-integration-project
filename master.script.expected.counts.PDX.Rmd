@@ -159,10 +159,12 @@ FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 
 ```{r re.scale.PCA.MAP.data}
 DefaultAssay(integrated.data) <- "integrated"
-r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c(nFeature_RNA, percent.mt))
+r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c("nFeature_RNA", "percent.mt"))
 r.PCA.integrated.data<- RunPCA(r.scale.integrated.data, npcs = 30, verbose = TRUE)
 r.UMAP.integrated.data <- RunUMAP(r.PCA.integrated.data, reduction = "pca", dims = 1:30)
 DimPlot(r.UMAP.integrated.data, reduction = "umap", label = TRUE)
+FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
+FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 ```
 
 
