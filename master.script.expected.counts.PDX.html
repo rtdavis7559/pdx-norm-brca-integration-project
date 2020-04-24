@@ -438,12 +438,16 @@ integrated.data &lt;- IntegrateData(anchorset = integration.anchors, dims = 1:30
 <div id="load-libraries-for-visualization-of-data" class="section level2">
 <h2>Load Libraries for Visualization of Data</h2>
 </div>
-<div id="integration-visualization" class="section level2">
-<h2>Integration Visualization</h2>
+<div id="scale-integrated-datarun-pcr-and-plot-via-umap" class="section level2">
+<h2>Scale integrated data,run PCR and plot via UMAP</h2>
 <pre class="r"><code>scale.integrated.data &lt;- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data&lt;- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
-#UMAP.integrated.data &lt;- RunUMAP(PCA.integrated.data, reduction = &quot;pca&quot;, dims = 1:30)
-UMAP.integrated.data &lt;- readRDS(&quot;/Users/paigehalas/Desktop/UMAP.integrated.data.rds&quot;)
+UMAP.integrated.data &lt;- RunUMAP(PCA.integrated.data, reduction = &quot;pca&quot;, dims = 1:30)
+#saveRDS(UMAP.indegrated.data, file = &quot;/Users/paigehalas/Desktop&quot;)</code></pre>
+</div>
+<div id="integration-visualization" class="section level2">
+<h2>Integration Visualization</h2>
+<pre class="r"><code>UMAP.integrated.data &lt;- readRDS(&quot;/Users/paigehalas/Desktop/UMAP.integrated.data.rds&quot;)
 DimPlot(UMAP.integrated.data, reduction = &quot;umap&quot;, label = TRUE)</code></pre>
 </div>
 <div id="define-cluster-markers-this-is-not-finished-yet" class="section level2">

@@ -8,7 +8,7 @@ output: html_document
 ## Load R packages
 ##Seurat, dpylr, reshape2, ggplot2, patchwork, cowplot needed
 ```{r load.packages, eval=FALSE, echo=FALSE}
-install.packages("Seurat")
+#install.packages("Seurat")
 library(Seurat)
 library(dplyr)
 library(reshape2)
@@ -124,12 +124,17 @@ library(patchwork)
 #DefaultAssay(integrated.data) <- "integrated"
 ```
 
-## Integration Visualization 
-
-```{r standard.workflow.integration.visualization.clustering,eval = FALSE,fig.height=4, fig.width=8}
+## Scale integrated data, run PCA and plot via UMAP 
+```{r standard.workflow.sacle.integrated.data, eval = FALSE}
 scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
-#UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+#saveRDS(UMAP.indegrated.data, file = "/Users/paigehalas/Desktop")
+```
+
+## Integration Visualization 
+
+```{r standard.workflow.integration.visualization, fig.height=4, fig.width=8}
 UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
 DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 ```
