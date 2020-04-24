@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ## Load R packages
-
+##Seurat, dpylr, reshape2, ggplot2, patchwork, cowplot needed
 ```{r load.packages, eval=FALSE, echo=FALSE}
 install.packages("Seurat")
 library(Seurat)
@@ -17,7 +17,7 @@ library(reshape2)
 
 ## Load in seurat objects
 
-```{r load.objects, echo=FALSE,eval=FALSE}
+```{r load.objects,eval=FALSE,echo=FALSE}
 #HCI001
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -28,7 +28,7 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
 
-##Set Default Assays to RNA for all datasets
+## Set Default Assays to "RNA" for all datasets
 
 ```{r set.default.assay, eval=FALSE}
 ## Data Integration - Standard Workflow
@@ -39,7 +39,7 @@ DefaultAssay(norm.brca.integrated.epithelial) <- "RNA"
 ```
 
 
-## Subset Norm/BRCA Dataset to Epithelial Cells Only
+## Subset Norm/BRCA Dataset to Epithelial Cells 
 
 ```{r subset.normbrca.dataset.compartment, eval=FALSE}
 #SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
@@ -49,11 +49,11 @@ norm.brca.subset.objects<-SplitObject(norm.brca.integrated.epithelial,"Compartme
 norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
 norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
 ```
-```{r check columns and the epithelial subset, eval=FALSE}
+```{r check.columns.and.the.epithelial.subset, echo=FALSE, eval=FALSE}
 colnames(norm.brca.epithelial.object@meta.data)
 head(norm.brca.epithelial.object$Compartment)
 ```
-##Subset Norm/BRCA Dataset by Individual
+## Subset Norm/BRCA Dataset by Individual
 
 ```{r subset.normbrca.dataset.individual, eval=FALSE}
 #SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "individual" column, to generate 6 new objects, for each patient. 
@@ -67,27 +67,25 @@ norm.brca.epithelial.individual.4.objects<-norm.brca.epithelial.individual.objec
 norm.brca.epithelial.individual.9.objects<-norm.brca.epithelial.individual.objects$ind9
 norm.brca.epithelial.individual.10.objects<-norm.brca.epithelial.individual.objects$ind10
 ```
-```{r check columns and the epithelial subset,eval=FALSE,echo=FALSE}
+```{r check.columns.and.the.individual.subset,eval=FALSE,echo=FALSE}
 colnames(norm.brca.epithelial.individual.1.objects@meta.data)
 head(norm.brca.epithelial.individual.1.objects@meta.data)
 ```
 
-##Generate a list of Seurat objects (PDX models and Norm/BRCA Individuals to perform the standard workflow on
+## Generate a list of Seurat objects (PDX models and Norm/BRCA Individuals) to perform the standard workflow integration on
 
 ```{r standard.workflow.generate.object.list, eval=FALSE}
 #To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
 #The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
 #first part 
-#Norm.BRCA dataset needs to be on the RNA matrix like the other three PDX model datasets 
-#DefaultAssay(norm.brca.epithelial.object) <- "RNA"
 standard.workflow.object.list <- 
 #list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated)
 list("hci001"=p01.counts,"hci002"=p02.counts,"hci010"=p10.counts,"n_patient1"=norm.brca.epithelial.individual.1.objects, "b_patient2"=norm.brca.epithelial.individual.2.objects, "b_patient3"=norm.brca.epithelial.individual.3.objects, "b_patient4" = norm.brca.epithelial.individual.4.objects, "n_patient9" = norm.brca.epithelial.individual.9.objects, "n_patient10"=norm.brca.epithelial.individual.10.objects )
 ```
 
-##Preprocessing before finding anchors by normalizing the data and identifying variable features 
+## Preprocessing before finding anchors by normalizing the data and identifying variable features 
 
-```{r standard.workflow.normalize.objects, eval=FALSE, echo=FALSE}
+```{r standard.workflow.normalize.objects, eval=FALSE}
 #Prior to finding anchors, we perform standard preprocessing (log-normalization), and identify variable features individually for each. Note that Seurat v3 implements an improved method for variable feature selection based on a variance stabilizing transformation ("vst")
 for (i in 1:length(standard.workflow.object.list)) {
     standard.workflow.object.list[[i]] <- NormalizeData(standard.workflow.object.list[[i]], verbose = TRUE)
@@ -96,7 +94,7 @@ for (i in 1:length(standard.workflow.object.list)) {
 }
 ```
 
-##Find the integration anchors
+## Find the integration anchors for the PDX and Norm/BRCA datasets
 
 
 ```{r standard.workflow.find.integration.anchors, eval=FALSE}
@@ -105,15 +103,15 @@ reference.list <- standard.workflow.object.list
 integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
 ```
 
-##Integration of Data using the defined anchors 
+## Integration of Data using the defined anchors 
 
-```{r standard.workflow.integrate.data, echo = FALSE, eval = FALSE}
+```{r standard.workflow.integrate.data, eval = FALSE}
 #After 
 integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
 
 ```
 
-##Load Libraries for Visualization 
+## Load Libraries for Visualization of Data
 
 ```{r visualize.integration.matrix, echo = FALSE, eval = FALSE}
 #load necessary packages for visualization 
@@ -126,25 +124,24 @@ library(patchwork)
 #DefaultAssay(integrated.data) <- "integrated"
 ```
 
-##Integration Visualization 
+## Integration Visualization 
 
-```{r standard.workflow.integration.visualization.clustering, echo = FALSE, eval = FALSE}
+```{r standard.workflow.integration.visualization.clustering,eval = FALSE,fig.height=4, fig.width=8}
 scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
-UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
-UMAP.integrated.data <- load("/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
-DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
+#UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
 UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/UMAP.integrated.data.rds")
+DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 ```
 
-##Define cluster markers 
+## Define cluster markers (this is not finished yet)
 
 ```{r look.at.cluser.markers, eval=FALSE}
 #markers <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 #UMAP.integrated.data %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
 ```
 
-##Adding columns for dataset types
+## Adding columns for dataset types
 
 ```{r adding.metadata.column, eval=FALSE}
 #Generate new list for the dataset type
@@ -159,9 +156,9 @@ Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI0
 UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
 ```
 
-##Adding cell types to the dataset
+## Adding cell types to the dataset
 
-```{r combined.cell.type. eval = FALSE}
+```{r combined.cell.type, eval = FALSE}
 #Generate new list for the cell type
 Combined_Cell_Type <- list()
 #Get the lung and lymph cells from the PDX models that are metastatic
