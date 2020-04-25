@@ -145,23 +145,34 @@ DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 
 ```{r look.at.feature.plot.for.nFeature_RNA, fig.height=4, fig.width=8}
 FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
-
 ```
 
 ## Recalculate the percent mito using the Seurat tutorial 
-```{r look.at.percent.mito,fig.height=4, fig.width=8}
+
+```{r look.at.percent.mito, eval=FALSE}
+integrated.data <- load("Users/paigehalas/Desktop/integrated.data.rda")
 DefaultAssay(integrated.data) <- "RNA"
 integrated.data[["percent.mt"]] <- PercentageFeatureSet(integrated.data, pattern = "^MT-")
+```
+
+##Plot UMAP with the new percent mito 
+
+```{r plot.new.UMAP.percent.mito, fig.height=4, fig.width=8}
 FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 ```
 
-##Try to rescale the data to account for differences in n_Feature and percent mit 
+##Try to rescale the data to account for differences in n_Feature and percent mito 
 
-```{r re.scale.PCA.MAP.data.and.look.at.feature.plots,fig.height=4, fig.width=8}
+```{r rescale.PCA.MAP.data.and.look.at.feature.plots, eval=FALSE}
 DefaultAssay(integrated.data) <- "integrated"
 r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c("nFeature_RNA", "percent.mt"))
 r.PCA.integrated.data<- RunPCA(r.scale.integrated.data, npcs = 30, verbose = TRUE)
 r.UMAP.integrated.data <- RunUMAP(r.PCA.integrated.data, reduction = "pca", dims = 1:30)
+```
+
+##Look at the UMAP and feature plots for n_Feature and percent mito 
+
+```{r look.at.UMAP.with.new.mito.and.feature.plots, fig.height=4, fig.width=8}
 DimPlot(r.UMAP.integrated.data, reduction = "umap", label = TRUE)
 FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
 FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
