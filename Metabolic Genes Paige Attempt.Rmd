@@ -21,7 +21,7 @@ library(readxl)
 
 ## Import List of Metabolic Genes 
 
-```{r import.list.of.metabolic.genes}
+```{r import.list.of.metabolic.genes.and.convert.to.characters, eval = FALSE}
 #name your dictionary 
 mydict <- dict()
 #prepare an excel file of all the genes where every column is a pathway name and its respective list of genes 
@@ -33,7 +33,7 @@ rest_genes_V <- as.character(rest_genes_V)
 
 ## Make lists from each of the columns in the Excel file and save them in the dictionary
 
-```{r configure.excel.to.make.lists}
+```{r configure.excel.to.make.lists.add.lists.to.dictionary, eval = FALSE}
 #for loop to make add to the dictionary where the pathway is the key and the value is the list of genes in that pathway: i.e. Oxphos is the key and its genes are the value
 for(i in colnames(rest_genes_V)){
   mydict[[i]] <- lapply(as.list(rest_genes_V[i]), function(x) x[!x %in% ""])
@@ -43,14 +43,14 @@ for(i in colnames(rest_genes_V)){
 
 ## Import the Norm/BRCA dataset that will be analyzed 
 
-```{r import.Norm.BRCA.data}
+```{r import.Norm.BRCA.data, eval = FALSE, echo = FALSE}
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
 ```
 
 ## Add module scores to the RNA assay in the Norm/BRCA dataset
 
-```{r add.module.scores}
+```{r add.module.scores, eval = FALSE}
 #set the DefaultAssay for the Norm.BRCA to be RNA 
 DefaultAssay(Norm.BRCA)<-"RNA"
 
@@ -78,7 +78,7 @@ VlnPlot(x, features = "Tryptophan.metabolism1", assay = "RNA", group.by = "Cell.
 
 ## Generate a new matrix to look at the relevent info we want to plot (cell type, pathways, status, and score)
 
-```{r make.a.new.matrix.where.you.are.looking.at.cell.type.status.pathways.and.scores}
+```{r make.a.new.matrix.where.you.are.looking.at.cell.type.status.pathways.and.score, eval = FALSE}
 #load required packages
 library(reshape2)
 library(ggplot2)
@@ -148,7 +148,7 @@ plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
 
 ##Plot for just glycolysis and oxphos 
 
-```{r plot.cell.types.with.glycolysis.and.oxphos}
+```{r plot.cell.types.with.glycolysis.and.oxphos, fig.height=4, fig.width=8}
 #do this for cell type with just glycolysis and Oxphos
 ct.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,34)])
 ct.metabolism.interest.box.plot.matrix.melted<-melt(ct.metabolism.interest.box.plot.matrix)
