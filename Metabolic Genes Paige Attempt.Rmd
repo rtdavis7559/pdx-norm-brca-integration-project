@@ -21,19 +21,17 @@ library(readxl)
 
 ## Import List of Metabolic Genes 
 
-```{r import.list.of.metabolic.genes.and.convert.to.characters, eval = FALSE}
+```{r import.list.of.metabolic.genes.and.convert.to.characters}
 #name your dictionary 
 mydict <- dict()
 #prepare an excel file of all the genes where every column is a pathway name and its respective list of genes 
 #import list
 rest_genes_V <- read_excel("~/Documents/UCI Grad School/CMB PhD Year 1/Lawson Lab/rest_genes_V.xlsx")
-#convert list of genes into characters 
-rest_genes_V <- as.character(rest_genes_V)
 ```
 
 ## Make lists from each of the columns in the Excel file and save them in the dictionary
 
-```{r configure.excel.to.make.lists.add.lists.to.dictionary, eval = FALSE}
+```{r configure.excel.to.make.lists.add.lists.to.dictionary}
 #for loop to make add to the dictionary where the pathway is the key and the value is the list of genes in that pathway: i.e. Oxphos is the key and its genes are the value
 for(i in colnames(rest_genes_V)){
   mydict[[i]] <- lapply(as.list(rest_genes_V[i]), function(x) x[!x %in% ""])
@@ -43,14 +41,14 @@ for(i in colnames(rest_genes_V)){
 
 ## Import the Norm/BRCA dataset that will be analyzed 
 
-```{r import.Norm.BRCA.data, eval = FALSE, echo = FALSE}
+```{r import.Norm.BRCA.data}
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 Norm.BRCA <- norm.brca.integrated.epithelial
 ```
 
 ## Add module scores to the RNA assay in the Norm/BRCA dataset
 
-```{r add.module.scores, eval = FALSE}
+```{r add.module.scores}
 #set the DefaultAssay for the Norm.BRCA to be RNA 
 DefaultAssay(Norm.BRCA)<-"RNA"
 
@@ -78,7 +76,7 @@ VlnPlot(x, features = "Tryptophan.metabolism1", assay = "RNA", group.by = "Cell.
 
 ## Generate a new matrix to look at the relevent info we want to plot (cell type, pathways, status, and score)
 
-```{r make.a.new.matrix.where.you.are.looking.at.cell.type.status.pathways.and.score, eval = FALSE}
+```{r make.a.new.matrix.where.you.are.looking.at.cell.type.status.pathways.and.score}
 #load required packages
 library(reshape2)
 library(ggplot2)
@@ -91,7 +89,7 @@ colnames(S.metabolism.box.plot.matrix.melted)<-c("cell.type","status","pathway",
 
 ## Plot Pathway Scores 
 
-```{r plotting.pathway.scores, fig.height=4, fig.width=8}
+```{r plotting.pathway.score, fig.height=8, fig.width=12}
 ggplot(S.metabolism.box.plot.matrix.melted,
                                     aes(x=cell.type,
                                         y=score,
@@ -106,7 +104,7 @@ ggplot(S.metabolism.box.plot.matrix.melted,
 
 ## Plot Metabolic Pathway scores based on cell type 
 
-```{r plotting.based.on.color.and.cell.type, fig.height=4, fig.width=8 }
+```{r plotting.based.on.color.and.cell.type, fig.height=8, fig.width=12 }
 #plot and color by cell type
 ggplot(S.metabolism.box.plot.matrix.melted,
                                     aes(x=status,
@@ -122,9 +120,9 @@ ggplot(S.metabolism.box.plot.matrix.melted,
 
 ## Plot only the pathways of interest (where BRCA is higher than Normal)
 
-``` {r.plotting.only.boxplots.of.pathways.of.interest, fig.height=4, fig.width=8}
+``` {r.plotting.only.boxplots.of.pathways.of.interest, fig.height=8, fig.width=12}
 #making a new box plot matrix with only relevent pathways 
-S.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,34,36,37,40,41,44,47,58,60,61,62)])
+S.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,40,47,40,51,54,55,57,65,68,69)])
 #melting matrix together
 S.metabolism.interest.box.plot.matrix.melted<-melt(S.metabolism.interest.box.plot.matrix)
 #renaming columns in new matrix
@@ -143,14 +141,14 @@ ggplot(S.metabolism.interest.box.plot.matrix.melted,
                                 geom_hline(yintercept = 0,size=1, color="black")+
                                 facet_wrap(~pathway, scales = "free")
 
-plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
+#plot_grid(plotlist = metabolism.vln.plots,ncol = 7)
 ```
 
 ##Plot for just glycolysis and oxphos 
 
-```{r plot.cell.types.with.glycolysis.and.oxphos, fig.height=4, fig.width=8}
+```{r plot.cell.types.with.glycolysis.and.oxphos, fig.height=8, fig.width=12}
 #do this for cell type with just glycolysis and Oxphos
-ct.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,34)])
+ct.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(65,69)])
 ct.metabolism.interest.box.plot.matrix.melted<-melt(ct.metabolism.interest.box.plot.matrix)
 colnames(ct.metabolism.interest.box.plot.matrix.melted)<-c("cell.type","status","individual","pathway","score")
 #plot just the glycolysis and oxphos datapoints 
