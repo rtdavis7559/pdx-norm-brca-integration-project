@@ -105,11 +105,13 @@ integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims
 
 ## Integration of Data using the defined anchors 
 
-```{r standard.workflow.integrate.data, eval = FALSE}
+```{r standard.workflow.integrate.data,eval=FALSE}
 #After 
 #if hitting vector limit issue, open terminal, set cd to home directory, use "open .Renviron" and set the R_MAX_VSIZE=20Gb and save the file, you need to restart R for these changes to be saved 
 integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
 #save(integrated.data, file = "/Users/paigehalas/Desktop/integrated.data.Rda")
+```
+``` {r load.integrated.data}
 load("/Users/paigehalas/Desktop/integrated.data.Rda")
 ```
 
@@ -127,7 +129,7 @@ library(patchwork)
 ```
 
 ## Scale integrated data, run PCA and plot via UMAP 
-```{r standard.workflow.sacle.integrated.data, eval = FALSE}
+```{r standard.workflow.sacle.integrated.data,eval = FALSE}
 scale.integrated.data <- ScaleData(integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
 UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
@@ -149,7 +151,7 @@ FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
 
 ## Recalculate the percent mito using the Seurat tutorial 
 
-```{r look.at.percent.mito, eval=FALSE}
+```{r look.at.percent.mito}
 integrated.data <- load("Users/paigehalas/Desktop/integrated.data.rda")
 DefaultAssay(integrated.data) <- "RNA"
 integrated.data[["percent.mt"]] <- PercentageFeatureSet(integrated.data, pattern = "^MT-")
@@ -163,7 +165,7 @@ FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 
 ##Try to rescale the data to account for differences in n_Feature and percent mito 
 
-```{r rescale.PCA.MAP.data.and.look.at.feature.plots, eval=FALSE}
+```{r rescale.PCA.MAP.data.and.look.at.feature.plots}
 DefaultAssay(integrated.data) <- "integrated"
 r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c("nFeature_RNA", "percent.mt"))
 r.PCA.integrated.data<- RunPCA(r.scale.integrated.data, npcs = 30, verbose = TRUE)
