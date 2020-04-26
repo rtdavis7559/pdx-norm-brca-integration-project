@@ -120,7 +120,7 @@ ggplot(S.metabolism.box.plot.matrix.melted,
 
 ## Plot only the pathways of interest (where BRCA is higher than Normal)
 
-``` {r.plotting.only.boxplots.of.pathways.of.interest, fig.height=8, fig.width=12}
+``` {r plotting.only.boxplots.of.pathways.of.interest, fig.height=8, fig.width=12}
 #making a new box plot matrix with only relevent pathways 
 S.metabolism.interest.box.plot.matrix<- cbind(x@meta.data[,13], x@meta.data[,8], x@meta.data[,4], x@meta.data[,c(33,40,47,40,51,54,55,57,65,68,69)])
 #melting matrix together
