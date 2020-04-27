@@ -112,7 +112,7 @@ integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
 #save(integrated.data, file = "/Users/paigehalas/Desktop/integrated.data.Rda")
 ```
 
-##Load Integrated Data
+## Load Integrated Data
 
 ``` {r load.integrated.data}
 load("/Users/paigehalas/Desktop/integrated.data.Rda")
@@ -155,32 +155,34 @@ FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
 ## Recalculate the percent mito using the Seurat tutorial 
 
 ```{r look.at.percent.mito}
-integrated.data <- load("Users/paigehalas/Desktop/integrated.data.rda")
-DefaultAssay(integrated.data) <- "RNA"
-integrated.data[["percent.mt"]] <- PercentageFeatureSet(integrated.data, pattern = "^MT-")
+#integrated.data <- load("Users/paigehalas/Desktop/integrated.data.rda")
+DefaultAssay(UMAP.integrated.data) <- "RNA"
+UMAP.integrated.data[["percent.mt"]] <- PercentageFeatureSet(UMAP.integrated.data, pattern = "^MT-")
 ```
 
-##Plot UMAP with the new percent mito 
+## Plot UMAP with the new percent mito 
 
 ```{r plot.new.UMAP.percent.mito, fig.height=4, fig.width=8}
 FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 ```
 
-##Try to rescale the data to account for differences in n_Feature and percent mito 
+## Rescale the data to account for differences in n_Feature and percent mito 
 
-```{r rescale.PCA.MAP.data.and.look.at.feature.plots}
+```{r rescale.PCA.MAP.data.and.look.at.feature.plots, eval = FALSE}
 DefaultAssay(integrated.data) <- "integrated"
 r.scale.integrated.data <- ScaleData(integrated.data,vars.to.regress=c("nFeature_RNA", "percent.mt"))
 r.PCA.integrated.data<- RunPCA(r.scale.integrated.data, npcs = 30, verbose = TRUE)
 r.UMAP.integrated.data <- RunUMAP(r.PCA.integrated.data, reduction = "pca", dims = 1:30)
+saveRDS(r.UMAP.integrated.data, file = "/Users/paigehalas/Desktop/r.UMAP.integrated.data.rds")
 ```
 
-##Look at the UMAP and feature plots for n_Feature and percent mito 
+## Look at the UMAP and feature plots for n_Feature and percent mito 
 
 ```{r look.at.UMAP.with.new.mito.and.feature.plots, fig.height=4, fig.width=8}
+r.UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/r.UMAP.integrated.data.rds")
 DimPlot(r.UMAP.integrated.data, reduction = "umap", label = TRUE)
 FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
-FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
+FeaturePlot(r.UMAP.integrated.data, features = "percent.mito")
 ```
 
 
@@ -195,32 +197,32 @@ FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 
 ```{r adding.metadata.column, eval=FALSE}
 #Generate new list for the dataset type
-Combined_Classification <- list ()
+#Combined_Classification <- list ()
 #Adding the five different classifications to the list 
-Combined_Classification[grep("NORMAL",UMAP.integrated.data$Status)] <- "Normal"
-Combined_Classification[grep("BRCA",UMAP.integrated.data$Status)] <- "BRCA"
-Combined_Classification[grep("HCI001",UMAP.integrated.data$patient.id)] <- "HCI001"
-Combined_Classification[grep("HCI002",UMAP.integrated.data$patient.id)] <- "HCI002"
-Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI010"
+#Combined_Classification[grep("NORMAL",UMAP.integrated.data$Status)] <- "Normal"
+#Combined_Classification[grep("BRCA",UMAP.integrated.data$Status)] <- "BRCA"
+#Combined_Classification[grep("HCI001",UMAP.integrated.data$patient.id)] <- "HCI001"
+#Combined_Classification[grep("HCI002",UMAP.integrated.data$patient.id)] <- "HCI002"
+#Combined_Classification[grep("HCI010",UMAP.integrated.data$patient.id)] <- "HCI010"
 #Add new metadata column 
-UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
+#UMAP.integrated.data[["Combined_Classification"]] <- as.character(Combined_Classification)
 ```
 
 ## Adding cell types to the dataset
 
 ```{r combined.cell.type, eval = FALSE}
 #Generate new list for the cell type
-Combined_Cell_Type <- list()
+#Combined_Cell_Type <- list()
 #Get the lung and lymph cells from the PDX models that are metastatic
-Combined_Cell_Type[grep("Lung", UMAP.integrated.data$tissue)] <- "Metastatic"
-Combined_Cell_Type[grep("Lymph", UMAP.integrated.data$tissue)] <- "Metastatic"
+#Combined_Cell_Type[grep("Lung", UMAP.integrated.data$tissue)] <- "Metastatic"
+#Combined_Cell_Type[grep("Lymph", UMAP.integrated.data$tissue)] <- "Metastatic"
 #Get the tumor cells from the PDX models that are tumor cells 
-Combined_Cell_Type[grep("Tumor", UMAP.integrated.data$tissue)] <- "Tumor"
+#Combined_Cell_Type[grep("Tumor", UMAP.integrated.data$tissue)] <- "Tumor"
 #Get the cell types from Kevins Norm/BRCA dataset 
-Combined_Cell_Type[grep("Basal", UMAP.integrated.data$Cell.Type)] <- "Basal"
-Combined_Cell_Type[grep("Luminal_1", UMAP.integrated.data$Cell.Type)] <- "Luminal_1"
-Combined_Cell_Type[grep("Luminal_2", UMAP.integrated.data$Cell.Type)] <- "Luminal_2"
-Combined_Cell_Type[grep("Unclassified", UMAP.integrated.data$Cell.Type)] <- "Unclassified"
+#Combined_Cell_Type[grep("Basal", UMAP.integrated.data$Cell.Type)] <- "Basal"
+#Combined_Cell_Type[grep("Luminal_1", UMAP.integrated.data$Cell.Type)] <- "Luminal_1"
+#Combined_Cell_Type[grep("Luminal_2", UMAP.integrated.data$Cell.Type)] <- "Luminal_2"
+#Combined_Cell_Type[grep("Unclassified", UMAP.integrated.data$Cell.Type)] <- "Unclassified"
 #Add new column 
-UMAP.integrated.data[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
+#UMAP.integrated.data[["Combined_Cell_Type"]] <- as.character(Combined_Cell_Type)
 ```
