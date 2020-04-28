@@ -641,7 +641,20 @@ pheatmap((as.matrix(hci010.prediction.heatmap)),
 DefaultAssay(norm.brca.integrated.epithelial)<"RNA"
 Idents(norm.brca.integrated.epithelial)<-"Coarse.Ident"
 norm.brca.epithelial.coarse.ident.markers <- FindAllMarkers(norm.brca.integrated.epithelial, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Basal")
+write.table(norm.brca.epithelial.coarse.ident.markers, file = "marker_genes/norm.brca.epithelial.coarse.ident.markers.txt",sep = "\t")
+```
+
+```{r calculate.module.scores.markers. echo=TRUE, eval=TRUE}
+norm.brca.epithelial.coarse.ident.markers<-read.table("marker_genes/norm.brca.epithelial.coarse.ident.markers.txt",sep = "\t")
+
+normal.basal.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Basal")
+normal.luminal1.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Luminal_1")
+normal.luminal2.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Luminal_2")
+brca.basal.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Basal")
+brca.luminal1.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Luminal_1")
+brca.luminal2.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Luminal_2")
+
+
 ```
 
 ## Save Seurat Objects (Last Saved: 04/23/20)
