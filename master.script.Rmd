@@ -14,6 +14,9 @@ library(reshape2)
 library(ggplot2)
 library(patchwork)
 library(cowplot)
+library(pheatmap)
+library(RColorBrewer)
+library(dendsort)
 ```
 
 ## Load in seurat objects
@@ -391,7 +394,7 @@ plot_grid(plot1,plot2, ncol = 1)
 
 ## Label Transfer
 
-```{r label.transfer.prep, eval=FALSE}
+```{r label.transfer.prep, eval=TRUE, echo=FALSE}
 #HCI001
 load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -401,6 +404,63 @@ load("seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 
+#Load TPM Seurat Objects to Transfer MetaData
+load("seurat-objects/hci001.seurat3.object.Rda")
+load("seurat-objects/hci002.seurat3.object.Rda")
+load("seurat-objects/hci010.seurat3.object.Rda")
+
+#Reorder HCI001 Meta Data
+p01.cc.updated[["cell.names"]]<-rownames(p01.cc.updated@meta.data)
+p01.cc.updated@meta.data<-arrange(p01.cc.updated@meta.data, cell.names)
+rownames(p01.cc.updated@meta.data)<-as.character(p01.cc.updated$cell.names)
+
+p01.counts[["cell.names"]]<-rownames(p01.counts@meta.data)
+p01.counts@meta.data<-arrange(p01.counts@meta.data, cell.names)
+rownames(p01.counts@meta.data)<-as.character(p01.counts$cell.names)
+
+#Add HCI001 Meta Data to Counts Seurat Object
+p01.counts[["mouse"]]<-p01.cc.updated$mouse
+p01.counts[["burden"]]<-p01.cc.updated$burden
+p01.counts[["tissue"]]<-p01.cc.updated$tissue
+p01.counts[["paper.ident"]]<-p01.cc.updated$paper.ident
+p01.counts[["pdx.surgery.type"]]<-p01.cc.updated$pdx.surgery.type
+p01.counts[["pdx.surgical.side"]]<-p01.cc.updated$pdx.surgical.side
+
+#Reorder HCI002 Meta Data
+p02.updated[["cell.names"]]<-rownames(p02.updated@meta.data)
+p02.updated@meta.data<-arrange(p02.updated@meta.data, cell.names)
+rownames(p02.updated@meta.data)<-as.character(p02.updated$cell.names)
+
+p02.counts[["cell.names"]]<-rownames(p02.counts@meta.data)
+p02.counts@meta.data<-arrange(p02.counts@meta.data, cell.names)
+rownames(p02.counts@meta.data)<-as.character(p02.counts$cell.names)
+
+#Add HCI002 Meta Data to Counts Seurat Object
+p02.counts[["mouse"]]<-p02.updated$mouse
+p02.counts[["burden"]]<-p02.updated$burden
+p02.counts[["tissue"]]<-p02.updated$tissue
+p02.counts[["paper.ident"]]<-p02.updated$paper.ident
+p02.counts[["pdx.surgery.type"]]<-p02.updated$pdx.surgery.type
+p02.counts[["pdx.surgical.side"]]<-p02.updated$pdx.surgical.side
+
+#Reorder HCI010 Meta Data
+p10.updated[["cell.names"]]<-rownames(p10.updated@meta.data)
+p10.updated@meta.data<-arrange(p10.updated@meta.data, cell.names)
+rownames(p10.updated@meta.data)<-as.character(p10.updated$cell.names)
+
+p10.counts[["cell.names"]]<-rownames(p10.counts@meta.data)
+p10.counts@meta.data<-arrange(p10.counts@meta.data, cell.names)
+rownames(p10.counts@meta.data)<-as.character(p10.counts$cell.names)
+
+#Add HCI010 Meta Data to Counts Seurat Object
+p10.counts[["mouse"]]<-p10.updated$mouse
+p10.counts[["burden"]]<-p10.updated$burden
+p10.counts[["tissue"]]<-p10.updated$tissue
+p10.counts[["paper.ident"]]<-p10.updated$paper.ident
+p10.counts[["pdx.surgery.type"]]<-p10.updated$pdx.surgery.type
+p10.counts[["pdx.surgical.side"]]<-p10.updated$pdx.surgical.side
+```
+```{r label.transfer.calculation, eval=TRUE, echo=FALSE}
 hci001.query <- p01.counts
 DefaultAssay(norm.brca.integrated.epithelial)<-"integrated"
 hci001.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci001.query, 
@@ -424,13 +484,164 @@ hci010.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelia
 predictions <- TransferData(anchorset = hci010.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
     dims = 1:30)
 hci010.query <- AddMetaData(hci010.query, metadata = predictions)
+```
 
-table(hci001.query$predicted.id)
-table(hci002.query$predicted.id)
-table(hci010.query$predicted.id)
+```{r label.transfer.visualize.hci001, eval=TRUE, echo=FALSE, fig.height=4, fig.width=7}
+hci001.prediction.plot<-FetchData(hci001.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                  "prediction.score.NORMAL.Luminal_1",
+                                                  "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci001.prediction.plot$tissue)<-c("Metastatic","Tumor")
+hci001.prediction.plot.melted<-melt(hci001.prediction.plot)
 
-plot(as.numeric(hci001.query$prediction.score.Luminal_1)
+ggplot(hci001.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score HCI001")+
+  theme_classic()+
+  facet_wrap(~ variable)
 
+hci001.prediction.heatmap.labels<-hci001.prediction.plot[,1:2]
+colnames(hci001.prediction.heatmap.labels)<-c("Status","Paper ID")
+
+colors<-brewer.pal(5, "Dark2")
+hci001.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("A1"=colors[3],"A2"=colors[4],"A3"=colors[5]))
+
+hci001.prediction.heatmap<-t(hci001.prediction.plot[,5:10])
+rownames(hci001.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci001.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci001.prediction.heatmap))))
+
+pheatmap((as.matrix(hci001.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci001.prediction.heatmap.labels,
+         annotation_colors = hci001.prediction.heatmap.colors,
+         cutree_cols = 3)
+```
+```{r label.transfer.visualize.hci002, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
+hci002.prediction.plot<-FetchData(hci002.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                  "prediction.score.NORMAL.Luminal_1",
+                                                  "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci002.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
+hci002.prediction.plot.melted<-melt(hci002.prediction.plot)
+
+ggplot(hci002.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score hci002")+
+  theme_classic()+
+  facet_wrap(~ variable)
+
+hci002.prediction.heatmap.labels<-hci002.prediction.plot[,1:2]
+colnames(hci002.prediction.heatmap.labels)<-c("Status","Paper ID")
+
+colors<-brewer.pal(7, "Dark2")
+hci002.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("B1"=colors[3],"B2"=colors[4],"B3"=colors[5],"B4"=colors[6],"B5"=colors[7]))
+
+hci002.prediction.heatmap<-t(hci002.prediction.plot[,5:10])
+rownames(hci002.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci002.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci002.prediction.heatmap))))
+
+pheatmap((as.matrix(hci002.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci002.prediction.heatmap.labels,
+         annotation_colors = hci002.prediction.heatmap.colors,
+         cutree_cols = 5)
+```
+```{r label.transfer.visualize.hci010, eval=TRUE, echo=FALSE, fig.height=4, fig.width=9}
+hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                  "prediction.score.NORMAL.Luminal_1",
+                                                  "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci010.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
+hci010.prediction.plot.melted<-melt(hci010.prediction.plot)
+
+ggplot(hci010.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score hci010")+
+  theme_classic()+
+  facet_wrap(~ variable)
+
+hci010.prediction.heatmap.labels<-hci010.prediction.plot[,1:2]
+colnames(hci010.prediction.heatmap.labels)<-c("Status","Paper ID")
+
+colors<-brewer.pal(8, "Dark2")
+hci010.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("C1"=colors[3],"C2"=colors[4],"C3"=colors[5],"C4"=colors[6],"C5"=colors[7],"C6"=colors[8]))
+
+hci010.prediction.heatmap<-t(hci010.prediction.plot[,5:10])
+rownames(hci010.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci010.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci010.prediction.heatmap))))
+
+pheatmap((as.matrix(hci010.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci010.prediction.heatmap.labels,
+         annotation_colors = hci010.prediction.heatmap.colors,
+         cutree_cols = 5)
+```
+
+```{r calculate.norm.brca.coarse.ident.markers, echo=TRUE, eval=FALSE}
+DefaultAssay(norm.brca.integrated.epithelial)<"RNA"
+Idents(norm.brca.integrated.epithelial)<-"Coarse.Ident"
+norm.brca.epithelial.coarse.ident.markers <- FindAllMarkers(norm.brca.integrated.epithelial, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Basal")
 ```
 
 ## Save Seurat Objects (Last Saved: 04/23/20)
