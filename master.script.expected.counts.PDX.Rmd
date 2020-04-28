@@ -189,9 +189,24 @@ FeaturePlot(r.UMAP.integrated.data, features = "percent.mito")
 ## Define cluster markers (this is not finished yet)
 
 ```{r look.at.cluser.markers, eval=FALSE}
-#markers <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-#UMAP.integrated.data %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
+markers <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.table(markers, file = "/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.txt")
+library(dplyr)
+top10 <- markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+DoHeatmap(UMAP.integrated.data, features = top10$gene, assay = "integrated") + NoLegend()
 ```
+```{r markers.need.to.be.in.RNA}
+markers.RNA <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "RNA")
+write.table(markers, file = "/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.RNA.txt")
+all.genes<-rownames(integrated.data@assays$RNA)
+integrated.data.g<-ScaleData(integrated.data,features = all.genes,assay = "RNA")
+library(dplyr)
+top10 <- markers.RNA %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+top10 <- as.character(top10$gene)
+DoHeatmap(integrated.data.g, features = top10$gene, assay = "RNA") + NoLegend()
+```
+
+
 
 ## Adding columns for dataset types
 
