@@ -185,24 +185,24 @@ FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
 FeaturePlot(r.UMAP.integrated.data, features = "percent.mito")
 ```
 
-## Define cluster markers (RNA assay data slot--correct way)
+## Define cluster markers
 
-```{r markers.need.to.be.in.RNA, eval=FALSE,echo=FALSE}
-markers.RNA <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "RNA")
-write.table(markers, file = "/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.RNA.txt")
-all.genes<-rownames(integrated.data@assays$RNA)
-integrated.data.g<-ScaleData(integrated.data,features = all.genes,assay = "RNA")
+```{r markers.need.to.be.in.RNA}
+#markers.RNA <- FindAllMarkers(UMAP.integrated.data, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25, assay = "RNA")
+#write.table(markers, file = "/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.RNA.txt")
+#all.genes<-rownames(integrated.data@assays$RNA)
+#integrated.data<-ScaleData(integrated.data,features = all.genes,assay = "RNA")
 #save(integrated.data.g, file = "/Users/paigehalas/Desktop/integrated.data.all.genes.scale.rda")
 ```
 
-## Look at top 10 genes for RNA assay slot (correct way)
+## Look at top 10 genes for RNA assay 
 
 ```{r look.at.top.10.genes.in.RNA, fig.height=4, fig.width=8}
-load("/Users/paigehalas/Desktop/integrated.data.all.genes.scale.rda")
-markers.RNA <- read.table("/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.RNA.txt")
-top10 <- markers.RNA %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+#load("/Users/paigehalas/Desktop/integrated.data.all.genes.scale.rda")
+#markers.RNA <- read.table("/Users/paigehalas/Desktop/norm.brca.pdx.std.integrated.res025.RNA.markers.RNA.txt")
+#top10 <- markers.RNA %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
 #top10 <- as.character(top10$gene)
-DoHeatmap(integrated.data.g, features = top10$gene, assay = "RNA") + NoLegend()
+#DoHeatmap(integrated.data, features = top10$gene, assay = "RNA") + NoLegend()
 ```
 
 ## Adding columns for dataset types
