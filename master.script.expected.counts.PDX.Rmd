@@ -176,13 +176,30 @@ r.UMAP.integrated.data <- RunUMAP(r.PCA.integrated.data, reduction = "pca", dims
 saveRDS(r.UMAP.integrated.data, file = "/Users/paigehalas/Desktop/r.UMAP.integrated.data.rds")
 ```
 
-## Look at the UMAP and feature plots for n_Feature and percent mito 
+## Look at the UMAP and feature plots for n_Feature and percent mito regressed out
 
 ```{r look.at.UMAP.with.new.mito.and.feature.plots, fig.height=4, fig.width=8}
 r.UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/r.UMAP.integrated.data.rds")
 DimPlot(r.UMAP.integrated.data, reduction = "umap", label = TRUE)
+```
+
+## Calculate percent mito for regressed out data
+
+```{r }
+DefaultAssay(r.UMAP.integrated.data) <- "RNA"
+r.UMAP.integrated.data[["percent.mt"]] <- PercentageFeatureSet(r.UMAP.integrated.data, pattern = "^MT-")
+```
+
+## Feature plot of regressed out features and mito for RNA Features 
+
+```{r feature.plot.RNA.regressed.out.RNA.features.and.mito}
 FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
-FeaturePlot(r.UMAP.integrated.data, features = "percent.mito")
+```
+
+## Feature plot of regressed out features and mito for mito
+
+``` {r feature.plot.percentmt.regressed.out.RNA.features.and.mito}
+FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 ```
 
 ## Define cluster markers
@@ -204,6 +221,10 @@ FeaturePlot(r.UMAP.integrated.data, features = "percent.mito")
 #top10 <- as.character(top10$gene)
 #DoHeatmap(integrated.data, features = top10$gene, assay = "RNA") + NoLegend()
 ```
+
+
+
+
 
 ## Adding columns for dataset types
 
