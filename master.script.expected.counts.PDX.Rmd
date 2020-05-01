@@ -450,14 +450,11 @@ hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
                                                   "prediction.score.BRCA.Luminal_2"))
 levels(hci010.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
 hci010.prediction.plot.melted<-melt(hci010.prediction.plot)
-#ggplot(hci010.prediction.plot.melted, aes(value, fill=tissue))+
-  #geom_histogram(binwidth = 0.01)+
-  #ggtitle("Prediction Score hci010")+
-  #theme_classic()+
-  #facet_wrap(~ variable)
 hci010.prediction.heatmap.labels<-hci010.prediction.plot[,1:2]
+
 colnames(hci010.prediction.heatmap.labels)<-c("Status","Paper ID")
 colors<-brewer.pal(8, "Dark2")
+
 hci010.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
                                        "Paper ID" = c("C1"=colors[3],"C2"=colors[4],"C3"=colors[5],"C4"=colors[6],"C5"=colors[7],"C6"=colors[8]))
 hci010.prediction.heatmap<-t(hci010.prediction.plot[,5:10])
@@ -467,10 +464,12 @@ rownames(hci010.prediction.heatmap)<-c("Normal Basal",
                                        "BRCA Basal",
                                        "BRCA Luminal 1",
                                        "BRCA Luminal 2")
+
 sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
 mat_cluster_cols <- hclust(dist(t((as.matrix(hci010.prediction.heatmap)))))
 mat_cluster_cols <- sort_hclust(mat_cluster_cols)
 mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci010.prediction.heatmap))))
+
 pheatmap((as.matrix(hci010.prediction.heatmap)),
          scale = "column",
          show_colnames = F,
