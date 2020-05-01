@@ -237,6 +237,70 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
 
+#R Label Transfer Prep Object Input
+
+```{r label.transfer.prep.objects}
+#Load TPM Seurat Objects to Transfer MetaData
+load("seurat-objects/hci001.seurat3.object.Rda")
+load("seurat-objects/hci002.seurat3.object.Rda")
+load("seurat-objects/hci010.seurat3.object.Rda")
+```
+
+## Label Transfer Reorder Metadata
+```{r reordering.mete.data}
+#Reorder HCI001 Meta Data
+p01.cc.updated[["cell.names"]]<-rownames(p01.cc.updated@meta.data)
+p01.cc.updated@meta.data<-arrange(p01.cc.updated@meta.data, cell.names)
+rownames(p01.cc.updated@meta.data)<-as.character(p01.cc.updated$cell.names)
+
+p01.counts[["cell.names"]]<-rownames(p01.counts@meta.data)
+p01.counts@meta.data<-arrange(p01.counts@meta.data, cell.names)
+rownames(p01.counts@meta.data)<-as.character(p01.counts$cell.names)
+
+#Add HCI001 Meta Data to Counts Seurat Object
+p01.counts[["mouse"]]<-p01.cc.updated$mouse
+p01.counts[["burden"]]<-p01.cc.updated$burden
+p01.counts[["tissue"]]<-p01.cc.updated$tissue
+p01.counts[["paper.ident"]]<-p01.cc.updated$paper.ident
+p01.counts[["pdx.surgery.type"]]<-p01.cc.updated$pdx.surgery.type
+p01.counts[["pdx.surgical.side"]]<-p01.cc.updated$pdx.surgical.side
+
+#Reorder HCI002 Meta Data
+p02.updated[["cell.names"]]<-rownames(p02.updated@meta.data)
+p02.updated@meta.data<-arrange(p02.updated@meta.data, cell.names)
+rownames(p02.updated@meta.data)<-as.character(p02.updated$cell.names)
+
+p02.counts[["cell.names"]]<-rownames(p02.counts@meta.data)
+p02.counts@meta.data<-arrange(p02.counts@meta.data, cell.names)
+rownames(p02.counts@meta.data)<-as.character(p02.counts$cell.names)
+
+#Add HCI002 Meta Data to Counts Seurat Object
+p02.counts[["mouse"]]<-p02.updated$mouse
+p02.counts[["burden"]]<-p02.updated$burden
+p02.counts[["tissue"]]<-p02.updated$tissue
+p02.counts[["paper.ident"]]<-p02.updated$paper.ident
+p02.counts[["pdx.surgery.type"]]<-p02.updated$pdx.surgery.type
+p02.counts[["pdx.surgical.side"]]<-p02.updated$pdx.surgical.side
+
+#Reorder HCI010 Meta Data
+p10.updated[["cell.names"]]<-rownames(p10.updated@meta.data)
+p10.updated@meta.data<-arrange(p10.updated@meta.data, cell.names)
+rownames(p10.updated@meta.data)<-as.character(p10.updated$cell.names)
+
+p10.counts[["cell.names"]]<-rownames(p10.counts@meta.data)
+p10.counts@meta.data<-arrange(p10.counts@meta.data, cell.names)
+rownames(p10.counts@meta.data)<-as.character(p10.counts$cell.names)
+
+#Add HCI010 Meta Data to Counts Seurat Object
+p10.counts[["mouse"]]<-p10.updated$mouse
+p10.counts[["burden"]]<-p10.updated$burden
+p10.counts[["tissue"]]<-p10.updated$tissue
+p10.counts[["paper.ident"]]<-p10.updated$paper.ident
+p10.counts[["pdx.surgery.type"]]<-p10.updated$pdx.surgery.type
+p10.counts[["pdx.surgical.side"]]<-p10.updated$pdx.surgical.side
+```
+
+
 ## Label Transfer Calculation (HCI001)
 
 ```{r label.transfer.calculation.HCI001, eval=FALSE, echo=FALSE}
@@ -273,6 +337,150 @@ hci010.query <- AddMetaData(hci010.query, metadata = predictions)
 save(hci010.query, file = "/Users/paigehalas/Desktop/hci010.counts.label.transfer.Rda")
 ```
 
+## HCI001 Visualize Label Transfer
+```{r install.packages.for.visualization}
+library(pheatmap)
+library(RColorBrewer)
+library(dendsort)
+```
+
+```{r visualize.hci001.label.transfer, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
+load(file = "/Users/paigehalas/Desktop/hci001.counts.label.transfer.Rda")
+hci001.prediction.plot<-FetchData(hci001.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                "prediction.score.NORMAL.Luminal_1",
+                                                "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci001.prediction.plot$tissue)<-c("Metastatic","Tumor")
+
+hci001.prediction.plot.melted<-melt(hci001.prediction.plot)
+hci001.prediction.heatmap.labels<-hci001.prediction.plot[,1:2]
+
+colnames(hci001.prediction.heatmap.labels)<-c("Status","Paper ID")
+library(RColorBrewer)
+colors<-brewer.pal(5, "Dark2")
+hci001.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("A1"=colors[3],"A2"=colors[4],"A3"=colors[5]))
+
+hci001.prediction.heatmap<-t(hci001.prediction.plot[,5:10])
+rownames(hci001.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci001.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci001.prediction.heatmap))))
+
+pheatmap((as.matrix(hci001.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci001.prediction.heatmap.labels,
+         annotation_colors = hci001.prediction.heatmap.colors,
+         cutree_cols = 3)
+```
+
+##HCI002 Visualization Label Transfer
+```{r label.transfer.HCI002.Visualization,eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
+load(file = "/Users/paigehalas/Desktop/hci002.counts.label.transfer.Rda")
+hci002.prediction.plot<-FetchData(hci002.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                  "prediction.score.NORMAL.Luminal_1",
+                                                  "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci002.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
+hci002.prediction.plot.melted<-melt(hci002.prediction.plot)
+
+hci002.prediction.heatmap.labels<-hci002.prediction.plot[,1:2]
+colnames(hci002.prediction.heatmap.labels)<-c("Status","Paper ID")
+
+colors<-brewer.pal(7, "Dark2")
+hci002.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("B1"=colors[3],"B2"=colors[4],"B3"=colors[5],"B4"=colors[6],"B5"=colors[7]))
+hci002.prediction.heatmap<-t(hci002.prediction.plot[,5:10])
+rownames(hci002.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci002.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci002.prediction.heatmap))))
+pheatmap((as.matrix(hci002.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci002.prediction.heatmap.labels,
+         annotation_colors = hci002.prediction.heatmap.colors,
+         cutree_cols = 5)
+```
+
+##HCI010 Vizualization of Label Transfer
+```{r visualization.HCI010.label.transfer, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
+load(file = "/Users/paigehalas/Desktop/hci010.counts.label.transfer.Rda")
+hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
+                                                  "paper.ident",
+                                                  "predicted.id",
+                                                  "cell.names",
+                                                  "prediction.score.NORMAL.Basal",
+                                                  "prediction.score.NORMAL.Luminal_1",
+                                                  "prediction.score.NORMAL.Luminal_2",
+                                                  "prediction.score.BRCA.Basal",
+                                                  "prediction.score.BRCA.Luminal_1",
+                                                  "prediction.score.BRCA.Luminal_2"))
+levels(hci010.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
+hci010.prediction.plot.melted<-melt(hci010.prediction.plot)
+#ggplot(hci010.prediction.plot.melted, aes(value, fill=tissue))+
+  #geom_histogram(binwidth = 0.01)+
+  #ggtitle("Prediction Score hci010")+
+  #theme_classic()+
+  #facet_wrap(~ variable)
+hci010.prediction.heatmap.labels<-hci010.prediction.plot[,1:2]
+colnames(hci010.prediction.heatmap.labels)<-c("Status","Paper ID")
+colors<-brewer.pal(8, "Dark2")
+hci010.prediction.heatmap.colors<-list("Status" = c("Tumor"=colors[1],"Metastatic"=colors[2]),
+                                       "Paper ID" = c("C1"=colors[3],"C2"=colors[4],"C3"=colors[5],"C4"=colors[6],"C5"=colors[7],"C6"=colors[8]))
+hci010.prediction.heatmap<-t(hci010.prediction.plot[,5:10])
+rownames(hci010.prediction.heatmap)<-c("Normal Basal",
+                                       "Normal Luminal 1",
+                                       "Normal Luminal 2",
+                                       "BRCA Basal",
+                                       "BRCA Luminal 1",
+                                       "BRCA Luminal 2")
+sort_hclust <- function(...) as.hclust(dendsort(as.dendrogram(...)))
+mat_cluster_cols <- hclust(dist(t((as.matrix(hci010.prediction.heatmap)))))
+mat_cluster_cols <- sort_hclust(mat_cluster_cols)
+mat_cluster_rows <- sort_hclust(hclust(dist(as.matrix(hci010.prediction.heatmap))))
+pheatmap((as.matrix(hci010.prediction.heatmap)),
+         scale = "column",
+         show_colnames = F,
+         cluster_cols = mat_cluster_cols,
+         cluster_rows = mat_cluster_rows,
+         color = PurpleAndYellow(50),
+         annotation_col = hci010.prediction.heatmap.labels,
+         annotation_colors = hci010.prediction.heatmap.colors,
+         cutree_cols = 5)
+```
 
 
 ## Adding columns for dataset types
