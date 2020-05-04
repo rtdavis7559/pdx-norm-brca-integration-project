@@ -234,10 +234,10 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 #HCI010
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
-load("/Users/paigehalas/Desktop/integrated.data.Rda")
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
 
-#R Label Transfer Prep Object Input
+# R Label Transfer Prep Object Input
 
 ```{r label.transfer.prep.objects}
 #Load TPM Seurat Objects to Transfer MetaData
@@ -305,33 +305,33 @@ p10.counts[["pdx.surgical.side"]]<-p10.updated$pdx.surgical.side
 
 ```{r label.transfer.calculation.HCI001, eval=FALSE, echo=FALSE}
 hci001.query <- p01.counts
-DefaultAssay(integrated.data) <- "integrated"
-hci001.anchors <- FindTransferAnchors(reference = integrated.data, query = hci001.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci001.anchors, refdata = integrated.data$Coarse.Ident, 
+DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
+hci001.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci001.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci001.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
     dims = 1:30)
 hci001.query <- AddMetaData(hci001.query, metadata = predictions)
 save(hci001.query, file = "/Users/paigehalas/Desktop/hci001.counts.label.transfer.Rda")
 ```
 
-##Label Transfer Calculation (HCI002)
+## Label Transfer Calculation (HCI002)
 
 ```{r label.transfer.calculation.HCI002, eval=FALSE, echo=FALSE}
 hci002.query <- p02.counts
-DefaultAssay(integrated.data) <- "integrated"
-hci002.anchors <- FindTransferAnchors(reference = integrated.data, query = hci002.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci002.anchors, refdata = integrated.data$Coarse.Ident, 
+DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
+hci002.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci002.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci002.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
     dims = 1:30)
 hci002.query <- AddMetaData(hci002.query, metadata = predictions)
 save(hci002.query, file = "/Users/paigehalas/Desktop/hci002.counts.label.transfer.Rda")
 ```
 
-##Label Transfer Calculation (HCI010)
+## Label Transfer Calculation (HCI010)
 
 ```{r label.transfer.calculation.HCI010, eval=FALSE, echo=FALSE}
 hci010.query <- p10.counts
-DefaultAssay(integrated.data) <- "integrated"
-hci010.anchors <- FindTransferAnchors(reference = integrated.data, query = hci010.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci010.anchors, refdata = integrated.data$Coarse.Ident, 
+DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
+hci010.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci010.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci010.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
     dims = 1:30)
 hci010.query <- AddMetaData(hci010.query, metadata = predictions)
 save(hci010.query, file = "/Users/paigehalas/Desktop/hci010.counts.label.transfer.Rda")
@@ -392,7 +392,7 @@ pheatmap((as.matrix(hci001.prediction.heatmap)),
          cutree_cols = 3)
 ```
 
-##HCI002 Visualization Label Transfer
+## HCI002 Visualization Label Transfer
 ```{r label.transfer.HCI002.Visualization,eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
 load(file = "/Users/paigehalas/Desktop/hci002.counts.label.transfer.Rda")
 hci002.prediction.plot<-FetchData(hci002.query, c("tissue",
@@ -436,7 +436,7 @@ pheatmap((as.matrix(hci002.prediction.heatmap)),
          cutree_cols = 5)
 ```
 
-##HCI010 Vizualization of Label Transfer
+## HCI010 Vizualization of Label Transfer
 ```{r visualization.HCI010.label.transfer, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
 load(file = "/Users/paigehalas/Desktop/hci010.counts.label.transfer.Rda")
 hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
