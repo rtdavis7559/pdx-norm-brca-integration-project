@@ -234,7 +234,7 @@ load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-o
 #HCI010
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
-load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+load("/Users/paigehalas/Desktop/integrated.data.Rda")
 ```
 
 #R Label Transfer Prep Object Input
@@ -305,9 +305,9 @@ p10.counts[["pdx.surgical.side"]]<-p10.updated$pdx.surgical.side
 
 ```{r label.transfer.calculation.HCI001, eval=FALSE, echo=FALSE}
 hci001.query <- p01.counts
-DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
-hci001.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci001.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci001.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
+DefaultAssay(integrated.data) <- "integrated"
+hci001.anchors <- FindTransferAnchors(reference = integrated.data, query = hci001.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci001.anchors, refdata = integrated.data$Coarse.Ident, 
     dims = 1:30)
 hci001.query <- AddMetaData(hci001.query, metadata = predictions)
 save(hci001.query, file = "/Users/paigehalas/Desktop/hci001.counts.label.transfer.Rda")
@@ -317,9 +317,9 @@ save(hci001.query, file = "/Users/paigehalas/Desktop/hci001.counts.label.transfe
 
 ```{r label.transfer.calculation.HCI002, eval=FALSE, echo=FALSE}
 hci002.query <- p02.counts
-DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
-hci002.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci002.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci002.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
+DefaultAssay(integrated.data) <- "integrated"
+hci002.anchors <- FindTransferAnchors(reference = integrated.data, query = hci002.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci002.anchors, refdata = integrated.data$Coarse.Ident, 
     dims = 1:30)
 hci002.query <- AddMetaData(hci002.query, metadata = predictions)
 save(hci002.query, file = "/Users/paigehalas/Desktop/hci002.counts.label.transfer.Rda")
@@ -329,9 +329,9 @@ save(hci002.query, file = "/Users/paigehalas/Desktop/hci002.counts.label.transfe
 
 ```{r label.transfer.calculation.HCI010, eval=FALSE, echo=FALSE}
 hci010.query <- p10.counts
-DefaultAssay(norm.brca.integrated.epithelial) <- "integrated"
-hci010.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci010.query, dims = 1:30)
-predictions <- TransferData(anchorset = hci010.anchors, refdata = norm.brca.integrated.epithelial$Coarse.Ident, 
+DefaultAssay(integrated.data) <- "integrated"
+hci010.anchors <- FindTransferAnchors(reference = integrated.data, query = hci010.query, dims = 1:30)
+predictions <- TransferData(anchorset = hci010.anchors, refdata = integrated.data$Coarse.Ident, 
     dims = 1:30)
 hci010.query <- AddMetaData(hci010.query, metadata = predictions)
 save(hci010.query, file = "/Users/paigehalas/Desktop/hci010.counts.label.transfer.Rda")
@@ -342,6 +342,7 @@ save(hci010.query, file = "/Users/paigehalas/Desktop/hci010.counts.label.transfe
 library(pheatmap)
 library(RColorBrewer)
 library(dendsort)
+library(reshape2)
 ```
 
 ```{r visualize.hci001.label.transfer, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
