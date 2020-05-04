@@ -394,7 +394,7 @@ plot_grid(plot1,plot2, ncol = 1)
 
 ## Label Transfer
 
-```{r label.transfer.load.objects, eval=TRUE, echo=FALSE}
+```{r label.transfer.prep, eval=TRUE, echo=FALSE}
 #HCI001
 load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -403,8 +403,7 @@ load("seurat-objects/hci002.expected.counts.trimmed.seurat3.object.Rda")
 load("seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
 load("seurat-objects/norm.brca.integrated.epithelial.Rda")
-```
-```{r label.transfer.prep.objects, eval=FALSE, echo=FALSE}
+
 #Load TPM Seurat Objects to Transfer MetaData
 load("seurat-objects/hci001.seurat3.object.Rda")
 load("seurat-objects/hci002.seurat3.object.Rda")
@@ -461,7 +460,7 @@ p10.counts[["paper.ident"]]<-p10.updated$paper.ident
 p10.counts[["pdx.surgery.type"]]<-p10.updated$pdx.surgery.type
 p10.counts[["pdx.surgical.side"]]<-p10.updated$pdx.surgical.side
 ```
-```{r label.transfer.calculation, eval=FALSE, echo=FALSE}
+```{r label.transfer.calculation, eval=TRUE, echo=FALSE}
 hci001.query <- p01.counts
 DefaultAssay(norm.brca.integrated.epithelial)<-"integrated"
 hci001.anchors <- FindTransferAnchors(reference = norm.brca.integrated.epithelial, query = hci001.query, 
@@ -487,8 +486,7 @@ predictions <- TransferData(anchorset = hci010.anchors, refdata = norm.brca.inte
 hci010.query <- AddMetaData(hci010.query, metadata = predictions)
 ```
 
-```{r label.transfer.visualize.hci001, eval=TRUE, echo=FALSE, fig.height=4, fig.width=9}
-load(file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci001.counts.label.transfer.Seurat3.object.Rda")
+```{r label.transfer.visualize.hci001, eval=TRUE, echo=FALSE, fig.height=4, fig.width=7}
 hci001.prediction.plot<-FetchData(hci001.query, c("tissue",
                                                   "paper.ident",
                                                   "predicted.id",
@@ -502,11 +500,11 @@ hci001.prediction.plot<-FetchData(hci001.query, c("tissue",
 levels(hci001.prediction.plot$tissue)<-c("Metastatic","Tumor")
 hci001.prediction.plot.melted<-melt(hci001.prediction.plot)
 
-#ggplot(hci001.prediction.plot.melted, aes(value, fill=tissue))+
- # geom_histogram(binwidth = 0.01)+
-  #ggtitle("Prediction Score HCI001")+
-  #theme_classic()+
-  #facet_wrap(~ variable)
+ggplot(hci001.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score HCI001")+
+  theme_classic()+
+  facet_wrap(~ variable)
 
 hci001.prediction.heatmap.labels<-hci001.prediction.plot[,1:2]
 colnames(hci001.prediction.heatmap.labels)<-c("Status","Paper ID")
@@ -538,8 +536,7 @@ pheatmap((as.matrix(hci001.prediction.heatmap)),
          annotation_colors = hci001.prediction.heatmap.colors,
          cutree_cols = 3)
 ```
-```{r label.transfer.visualize.hci002, eval=TRUE, echo=FALSE, fig.height=4, fig.width=9}
-load(file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci002.counts.label.transfer.Seurat3.object.Rda")
+```{r label.transfer.visualize.hci002, eval=TRUE, echo=FALSE, fig.height=4, fig.width=8}
 hci002.prediction.plot<-FetchData(hci002.query, c("tissue",
                                                   "paper.ident",
                                                   "predicted.id",
@@ -553,11 +550,11 @@ hci002.prediction.plot<-FetchData(hci002.query, c("tissue",
 levels(hci002.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
 hci002.prediction.plot.melted<-melt(hci002.prediction.plot)
 
-#ggplot(hci002.prediction.plot.melted, aes(value, fill=tissue))+
-  #geom_histogram(binwidth = 0.01)+
-  #ggtitle("Prediction Score hci002")+
-  #theme_classic()+
-  #facet_wrap(~ variable)
+ggplot(hci002.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score hci002")+
+  theme_classic()+
+  facet_wrap(~ variable)
 
 hci002.prediction.heatmap.labels<-hci002.prediction.plot[,1:2]
 colnames(hci002.prediction.heatmap.labels)<-c("Status","Paper ID")
@@ -589,9 +586,7 @@ pheatmap((as.matrix(hci002.prediction.heatmap)),
          annotation_colors = hci002.prediction.heatmap.colors,
          cutree_cols = 5)
 ```
-
 ```{r label.transfer.visualize.hci010, eval=TRUE, echo=FALSE, fig.height=4, fig.width=9}
-load(file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci010.counts.label.transfer.Seurat3.object.Rda")
 hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
                                                   "paper.ident",
                                                   "predicted.id",
@@ -605,11 +600,11 @@ hci010.prediction.plot<-FetchData(hci010.query, c("tissue",
 levels(hci010.prediction.plot$tissue)<-c("Metastatic","Metastatic","Tumor")
 hci010.prediction.plot.melted<-melt(hci010.prediction.plot)
 
-#ggplot(hci010.prediction.plot.melted, aes(value, fill=tissue))+
-  #geom_histogram(binwidth = 0.01)+
-  #ggtitle("Prediction Score hci010")+
-  #theme_classic()+
-  #facet_wrap(~ variable)
+ggplot(hci010.prediction.plot.melted, aes(value, fill=tissue))+
+  geom_histogram(binwidth = 0.01)+
+  ggtitle("Prediction Score hci010")+
+  theme_classic()+
+  facet_wrap(~ variable)
 
 hci010.prediction.heatmap.labels<-hci010.prediction.plot[,1:2]
 colnames(hci010.prediction.heatmap.labels)<-c("Status","Paper ID")
@@ -641,79 +636,17 @@ pheatmap((as.matrix(hci010.prediction.heatmap)),
          annotation_colors = hci010.prediction.heatmap.colors,
          cutree_cols = 5)
 ```
-
-```{r calculate.norm.brca.coarse.ident.markers, echo=TRUE, eval=FALSE}
-DefaultAssay(norm.brca.integrated.epithelial)<"RNA"
+```{r label.transfer.epithelial.marker.genes, echo=T, eval=F}
+DefaultAssay(norm.brca.integrated.epithelial)<-"RNA"
 Idents(norm.brca.integrated.epithelial)<-"Coarse.Ident"
-norm.brca.epithelial.coarse.ident.markers <- FindAllMarkers(norm.brca.integrated.epithelial, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-write.table(norm.brca.epithelial.coarse.ident.markers, file = "marker_genes/norm.brca.epithelial.coarse.ident.markers.txt",sep = "\t")
+norm.brca.epithelial.markers <- FindAllMarkers(norm.brca.integrated.epithelial, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 ```
 
-```{r calculate.module.scores.markers, echo=FALSE, eval=TRUE}
-norm.brca.epithelial.coarse.ident.markers<-read.table("marker_genes/norm.brca.epithelial.coarse.ident.markers.txt",sep = "\t")
 
-normal.basal.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Basal")
-normal.basal.genes<-list(norm.basal=as.character(normal.basal.markers$gene))
-normal.luminal1.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Luminal_1")
-normal.luminal1.genes<-list(norm.basal=normal.luminal1.markers$gene)
-normal.luminal2.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="NORMAL.Luminal_2")
-normal.luminal2.genes<-list(norm.basal=normal.luminal2.markers$gene)
-brca.basal.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Basal")
-brca.basal.genes<-list(norm.basal=brca.basal.markers$gene)
-brca.luminal1.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Luminal_1")
-brca.luminal1.genes<-list(norm.basal=brca.luminal1.markers$gene)
-brca.luminal2.markers<-subset(norm.brca.epithelial.coarse.ident.markers, cluster=="BRCA.Luminal_2")
-brca.luminal2.genes<-list(norm.basal=brca.luminal2.markers$gene)
-
-DefaultAssay(hci001.query)<-"RNA"
-hci001.query<-AddModuleScore(hci001.query, features = normal.basal.genes, name = "Normal_Basal_Score")
-hci001.query<-AddModuleScore(hci001.query, features = normal.luminal1.genes, name = "Normal_Luminal_1_Score")
-hci001.query<-AddModuleScore(hci001.query, features = normal.luminal2.genes, name = "Normal_Luminal_2_Score")
-hci001.query<-AddModuleScore(hci001.query, features = brca.basal.genes, name = "BRCA_Basal_Score")
-hci001.query<-AddModuleScore(hci001.query, features = brca.luminal1.genes, name = "BRCA_Luminal_1_Score")
-hci001.query<-AddModuleScore(hci001.query, features = brca.luminal2.genes, name = "BRCA_Luminal_2_Score")
-
-DefaultAssay(hci002.query)<-"RNA"
-hci002.query<-AddModuleScore(hci002.query, features = normal.basal.genes, name = "Normal_Basal_Score")
-hci002.query<-AddModuleScore(hci002.query, features = normal.luminal1.genes, name = "Normal_Luminal_1_Score")
-hci002.query<-AddModuleScore(hci002.query, features = normal.luminal2.genes, name = "Normal_Luminal_2_Score")
-hci002.query<-AddModuleScore(hci002.query, features = brca.basal.genes, name = "BRCA_Basal_Score")
-hci002.query<-AddModuleScore(hci002.query, features = brca.luminal1.genes, name = "BRCA_Luminal_1_Score")
-hci002.query<-AddModuleScore(hci002.query, features = brca.luminal2.genes, name = "BRCA_Luminal_2_Score")
-
-DefaultAssay(hci010.query)<-"RNA"
-hci010.query<-AddModuleScore(hci010.query, features = normal.basal.genes, name = "Normal_Basal_Score")
-hci010.query<-AddModuleScore(hci010.query, features = normal.luminal1.genes, name = "Normal_Luminal_1_Score")
-hci010.query<-AddModuleScore(hci010.query, features = normal.luminal2.genes, name = "Normal_Luminal_2_Score")
-hci010.query<-AddModuleScore(hci010.query, features = brca.basal.genes, name = "BRCA_Basal_Score")
-hci010.query<-AddModuleScore(hci010.query, features = brca.luminal1.genes, name = "BRCA_Luminal_1_Score")
-hci010.query<-AddModuleScore(hci010.query, features = brca.luminal2.genes, name = "BRCA_Luminal_2_Score")
-
-quantile(hci001.query$prediction.score.BRCA.Luminal_1)
-hci001.query@meta.data <- mutate(hci001.query@meta.data, Normal.Basal.Prediction.Quantiles = ifelse(prediction.score.NORMAL.Basal <= 0.11121587, "4. Lowest (<= 0.11121587)",
-                                     ifelse(prediction.score.NORMAL.Basal <= 0.14351266, "3. Low (<= 0.14351266)",
-                                            ifelse(prediction.score.NORMAL.Basal <= 0.16849673, "2. High (<= 0.16849673)", "1. Highest (> 0.16849673)"))))
-hci001.query@meta.data <- mutate(hci001.query@meta.data, Normal.Luminal1.Prediction.Quantiles = ifelse(prediction.score.NORMAL.Luminal_1 <= 0.5397483, "4. Lowest (<= 0.5397483)",
-                                     ifelse(prediction.score.NORMAL.Luminal_1 <= 0.5837266, "3. Low (<= 0.5837266)",
-                                            ifelse(prediction.score.NORMAL.Luminal_1 <= 0.6197146, "2. High (<= 0.6197146)", "1. Highest (> 0.6197146)"))))
-hci001.query@meta.data <- mutate(hci001.query@meta.data, Normal.Luminal2.Prediction.Quantiles = ifelse(prediction.score.NORMAL.Luminal_2 <= 0.000000000, "4. Lowest (<= 0.000000000)",
-                                     ifelse(prediction.score.NORMAL.Luminal_2 <= 0.005199667, "3. Low (<= 0.005199667)",
-                                            ifelse(prediction.score.NORMAL.Luminal_2 <= 0.019263320, "2. High (<= 0.019263320)", "1. Highest (> 0.019263320)"))))
-hci001.query@meta.data <- mutate(hci001.query@meta.data, BRCA.Basal.Prediction.Quantiles = "NA")
-hci001.query@meta.data <- mutate(hci001.query@meta.data, BRCA.Luminal1.Prediction.Quantiles = ifelse(prediction.score.BRCA.Luminal_1 <= 0.15272844, "4. Lowest (<= 0.15272844)",
-                                     ifelse(prediction.score.BRCA.Luminal_1 <= 0.21370578, "3. Low (<= 0.21370578)",
-                                            ifelse(prediction.score.BRCA.Luminal_1 <= 0.25355237, "2. High (<= 0.25355237)", "1. Highest (> 0.25355237)"))))
-rownames(hci001.query@meta.data)<-rownames(p01.counts@meta.data)
-VlnPlot(hci001.query, "BRCA_Luminal_1_Score1", group.by = "Normal.Luminal1.Prediction.Quantiles", split.by = "tissue")
-```
-
-## Save Seurat Objects (Last Saved: 04/28/20)
+## Save Seurat Objects (Last Saved: 04/23/20)
 
 ```{r sctransform.save.object, eval = FALSE}
 #save(norm.brca.pdx.integrated, file="E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.sctransform.3000features.SeuratObject.Rda")
 #save(norm.brca.pdx.integrated.basal, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.basal.sctransform.3000features.SeuratObject.Rda")
 #save(norm.brca.pdx.integrated.luminal1, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\norm.brca.pdx.expectedcounts.integrated.luminal1.sctransform.3000features.SeuratObject.Rda")
-#save(hci001.query, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci001.counts.label.transfer.Seurat3.object.Rda")
-#save(hci002.query, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci002.counts.label.transfer.Seurat3.object.Rda")
-#save(hci010.query, file = "E:\\Scripts\\Seurat\\Seurat3_Objects\\hci010.counts.label.transfer.Seurat3.object.Rda")
 ```
