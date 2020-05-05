@@ -202,6 +202,159 @@ FeaturePlot(r.UMAP.integrated.data, features = "nFeature_RNA")
 FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 ```
 
+## Integration with downsampling 10X Dataset
+
+## Load in seurat objects
+
+```{r load.objects,eval=FALSE,echo=FALSE}
+#HCI001
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
+#HCI002
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci002.expected.counts.trimmed.seurat3.object.Rda")
+#HCI010
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
+#Norm/BRCA
+load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+```
+
+## Look at the Counts for Each Object 
+
+``` {r look.at.counts, eval=FALSE,echo=FALSE}
+table(Idents(p01.counts))
+table(Idents(p02.counts))
+table(Idents(p10.counts))
+table(Idents(norm.brca.integrated.epithelial))
+```
+
+## Split the Norm/BRCA by Compartment and Individual 
+
+```{r split.norm.brca.by.compartment.and.individual, eval = FALSE}
+#SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
+norm.brca.subset.objects<-SplitObject(norm.brca.integrated.epithelial,"Compartment")
+
+#We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
+norm.brca.epithelial.object<-norm.brca.subset.objects$EPITHELIAL
+norm.brca.stromal.object<-norm.brca.subset.objects$STROMAL
+
+#SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "individual" column, to generate 6 new objects, for each patient. 
+norm.brca.epithelial.individual.objects<-SplitObject(norm.brca.epithelial.object,"individual")
+
+#We now seperate out each component of the list into seperate Seurat objects. The "$" command specifies which part of the full list we want to access.
+norm.brca.epithelial.individual.1.objects<-norm.brca.epithelial.individual.objects$ind1
+norm.brca.epithelial.individual.2.objects<-norm.brca.epithelial.individual.objects$ind2
+norm.brca.epithelial.individual.3.objects<-norm.brca.epithelial.individual.objects$ind3
+norm.brca.epithelial.individual.4.objects<-norm.brca.epithelial.individual.objects$ind4
+norm.brca.epithelial.individual.9.objects<-norm.brca.epithelial.individual.objects$ind9
+norm.brca.epithelial.individual.10.objects<-norm.brca.epithelial.individual.objects$ind10
+```
+
+## Downsample NORM/BRCA datasets to have a similar number of cells as PDX samples
+
+```{r downsample.norm.brca.to.avg.PDX.cells.373}
+ds.norm.brca.epithelial.individual.1.objects <- subset(norm.brca.epithelial.individual.1.objects, downsample = 373)
+ds.norm.brca.epithelial.individual.2.objects <- subset(norm.brca.epithelial.individual.2.objects, downsample = 373)
+ds.norm.brca.epithelial.individual.3.objects <- subset(norm.brca.epithelial.individual.3.objects, downsample = 373)
+ds.norm.brca.epithelial.individual.4.objects <- subset(norm.brca.epithelial.individual.4.objects, downsample = 373)
+ds.norm.brca.epithelial.individual.9.objects <- subset(norm.brca.epithelial.individual.9.objects, downsample = 373)
+ds.norm.brca.epithelial.individual.10.objects <- subset(norm.brca.epithelial.individual.10.objects, downsample = 373)
+```
+
+
+## Generate a list of Seurat objects (PDX models and Norm/BRCA Individuals--downsampled to 373) to perform the standard workflow integration on
+
+```{r standard.workflow.generate.object.list.downsampled, eval=FALSE}
+#To construct a reference, we will identify ‘anchors’ between the individual datasets. First, we combine each Seurat object into a list, with each dataset as an element.
+#The list() function groups elements together in the form of list("X1"=Y1,"X2",Y2,...), where Xn is the name you want the list element to be called and Yn is the component you want added to the list. For this analysis, we want to keep track of which Seurat object belongs to which model/patient.
+#first part 
+standard.workflow.object.list <- 
+#list("hci001"=p01.cc.updated,"hci002"=p02.updated,"hci010"=p10.updated)
+list("hci001"=p01.counts,"hci002"=p02.counts,"hci010"=p10.counts,"n_patient1"=ds.norm.brca.epithelial.individual.1.objects, "b_patient2"=ds.norm.brca.epithelial.individual.2.objects, "b_patient3"=ds.norm.brca.epithelial.individual.3.objects, "b_patient4" = ds.norm.brca.epithelial.individual.4.objects, "n_patient9" = ds.norm.brca.epithelial.individual.9.objects, "n_patient10"=ds.norm.brca.epithelial.individual.10.objects )
+```
+
+## Preprocessing before finding anchors by normalizing the data and identifying variable features--downsampled 
+
+```{r standard.workflow.normalize.objects.downsampled, eval=FALSE}
+#Prior to finding anchors, we perform standard preprocessing (log-normalization), and identify variable features individually for each. Note that Seurat v3 implements an improved method for variable feature selection based on a variance stabilizing transformation ("vst")
+for (i in 1:length(standard.workflow.object.list)) {
+    standard.workflow.object.list[[i]] <- NormalizeData(standard.workflow.object.list[[i]], verbose = TRUE)
+    standard.workflow.object.list[[i]] <- FindVariableFeatures(standard.workflow.object.list[[i]], selection.method = "vst", 
+        nfeatures = 2000, verbose = TRUE)
+}
+```
+
+
+## Find the integration anchors for the PDX and Norm/BRCA datasets--downsampled
+
+
+```{r standard.workflow.find.integration.anchors.downsampled, eval=FALSE}
+#Next we find anchors, which are pairwise correspondants between individual cells which originate from the same biological state. These anchors are then used to transfer infromation from one dataset to another
+reference.list <- standard.workflow.object.list
+integration.anchors <- FindIntegrationAnchors(object.list = reference.list, dims = 1:30)
+```
+
+## Integration of Data using the defined anchors for downsampled data
+
+```{r standard.workflow.integrate.data.downsampled,eval=FALSE}
+#After 
+#if hitting vector limit issue, open terminal, set cd to home directory, use "open .Renviron" and set the R_MAX_VSIZE=20Gb and save the file, you need to restart R for these changes to be saved 
+ds.integrated.data <- IntegrateData(anchorset = integration.anchors, dims = 1:30)
+save(ds.integrated.data, file = "/Users/paigehalas/Desktop/ds.integrated.data.Rda")
+```
+
+## Load Integrated Dwonsampled Data
+
+``` {r load.integrated.data.downsampled}
+load("/Users/paigehalas/Desktop/ds.integrated.data.Rda")
+```
+
+## Load Libraries for Visualization of Data
+
+```{r visualize.integration.matrix.downsampled}
+#load necessary packages for visualization 
+library(ggplot2)
+library(cowplot)
+library(patchwork)
+
+# switch to integrated assay. The variable features of this assay are automatically
+# set during IntegrateData
+#DefaultAssay(integrated.data) <- "integrated"
+```
+
+## Scale downsampled integrated data, run PCA and plot via UMAP 
+```{r standard.workflow.sacle.integrated.data.downsampled,eval = FALSE}
+scale.integrated.data <- ScaleData(ds.integrated.data, verbose = TRUE)
+PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
+UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
+saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/ds.UMAP.integrated.data.rds")
+```
+
+## Look at the UMAP and feature plots for downsampled integration
+
+```{r look.at.UMAP.with.downsampled, fig.height=4, fig.width=8}
+#ds.UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/ds.UMAP.integrated.data.rds")
+DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
+```
+
+## Feature plot for nFeature_RNA to compare PDX cells and Norm/BRCA cells that are downsampled
+
+```{r look.at.feature.plot.for.nFeature_RNA.downsampled, fig.height=4, fig.width=8}
+FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
+```
+
+## Calculate percent mito for downsampled data
+
+```{r calculate.percent.mito.downsampled.data }
+DefaultAssay(UMAP.integrated.data) <- "RNA"
+UMAP.integrated.data[["percent.mt"]] <- PercentageFeatureSet(UMAP.integrated.data, pattern = "^MT-")
+```
+
+
+## Feature plot for percent mito to compare PDX cells and Norm/BRCA cells that are downsampled
+
+```{r look.at.feature.plot.for.percent.mito.downsampled, fig.height=4, fig.width=8}
+FeaturePlot(UMAP.integrated.data, features = "percent.mito", label=TRUE)
+```
+
 ## Define cluster markers
 
 ```{r markers.need.to.be.in.RNA}
