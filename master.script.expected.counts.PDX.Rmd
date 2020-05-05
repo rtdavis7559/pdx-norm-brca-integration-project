@@ -206,7 +206,7 @@ FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 
 ## Load in seurat objects
 
-```{r load.objects,eval=FALSE,echo=FALSE}
+```{r load.objects.for.downsample,eval=FALSE,echo=FALSE}
 #HCI001
 load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
@@ -325,7 +325,7 @@ library(patchwork)
 scale.integrated.data <- ScaleData(ds.integrated.data, verbose = TRUE)
 PCA.integrated.data<- RunPCA(scale.integrated.data, npcs = 30, verbose = TRUE)
 UMAP.integrated.data <- RunUMAP(PCA.integrated.data, reduction = "pca", dims = 1:30)
-saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/ds.UMAP.integrated.data.rds")
+#saveRDS(UMAP.integrated.data, file = "/Users/paigehalas/Desktop/ds.UMAP.integrated.data.rds")
 ```
 
 ## Look at the UMAP and feature plots for downsampled integration
