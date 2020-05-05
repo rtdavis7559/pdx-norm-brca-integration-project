@@ -228,7 +228,7 @@ table(Idents(norm.brca.integrated.epithelial))
 
 ## Split the Norm/BRCA by Compartment and Individual 
 
-```{r split.norm.brca.by.compartment.and.individual, eval = FALSE}
+```{r split.norm.brca.by.compartment.and.individual, eval = FALSE, echo = FALSE}
 #SplitObject command will generate subsets of a Seurat object in list form based on the given metadata column. For this, we subset on the "Compartment" column, to generate two new objects, the epithelial compartment and the stromal compartment
 norm.brca.subset.objects<-SplitObject(norm.brca.integrated.epithelial,"Compartment")
 
@@ -250,7 +250,7 @@ norm.brca.epithelial.individual.10.objects<-norm.brca.epithelial.individual.obje
 
 ## Downsample NORM/BRCA datasets to have a similar number of cells as PDX samples
 
-```{r downsample.norm.brca.to.avg.PDX.cells.373}
+```{r downsample.norm.brca.to.avg.PDX.cells.373, eval = FALSE}
 ds.norm.brca.epithelial.individual.1.objects <- subset(norm.brca.epithelial.individual.1.objects, downsample = 373)
 ds.norm.brca.epithelial.individual.2.objects <- subset(norm.brca.epithelial.individual.2.objects, downsample = 373)
 ds.norm.brca.epithelial.individual.3.objects <- subset(norm.brca.epithelial.individual.3.objects, downsample = 373)
