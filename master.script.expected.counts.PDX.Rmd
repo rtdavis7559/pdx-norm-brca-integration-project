@@ -149,7 +149,7 @@ DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 ## Feature plot for nFeature_RNA to compare PDX cells and Norm/BRCA cells  
 
 ```{r look.at.feature.plot.for.nFeature_RNA, fig.height=4, fig.width=8}
-FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
+FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA")
 ```
 
 ## Recalculate the percent mito using the Seurat tutorial 
@@ -338,7 +338,7 @@ DimPlot(UMAP.integrated.data, reduction = "umap", label = TRUE)
 ## Feature plot for nFeature_RNA to compare PDX cells and Norm/BRCA cells that are downsampled
 
 ```{r look.at.feature.plot.for.nFeature_RNA.downsampled, fig.height=4, fig.width=8}
-FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA", label=TRUE)
+FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA")
 ```
 
 ## Calculate percent mito for downsampled data
@@ -352,8 +352,12 @@ UMAP.integrated.data[["percent.mt"]] <- PercentageFeatureSet(UMAP.integrated.dat
 ## Feature plot for percent mito to compare PDX cells and Norm/BRCA cells that are downsampled
 
 ```{r look.at.feature.plot.for.percent.mito.downsampled, fig.height=4, fig.width=8}
-FeaturePlot(UMAP.integrated.data, features = "percent.mito", label=TRUE)
+FeaturePlot(UMAP.integrated.data, features = "percent.mt")
 ```
+```{r look.at.feature.plot.for.percent.mito.downsampled.count, fig.height=4, fig.width=8}
+FeaturePlot(UMAP.integrated.data, features = "nFeature_RNA")
+```
+
 
 ## Define cluster markers
 
