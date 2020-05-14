@@ -209,18 +209,18 @@ FeaturePlot(r.UMAP.integrated.data, features = "percent.mt")
 
 ```{r load.objects.for.downsample,eval=FALSE,echo=FALSE}
 #HCI001
-load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci001.expected.counts.trimmed.seurat3.object.Rda")
 #HCI002
-load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci002.expected.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci002.expected.counts.trimmed.seurat3.object.Rda")
 #HCI010
-load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
+load("seurat-objects/hci010.expected.counts.trimmed.seurat3.object.Rda")
 #Norm/BRCA
-load("/Users/paigehalas/ph-future-phd/pdx-norm-brca-integration-project/seurat-objects/norm.brca.integrated.epithelial.Rda")
+load("seurat-objects/norm.brca.integrated.epithelial.Rda")
 ```
 
 ## Look at the Counts for Each Object 
 
-``` {r look.at.counts, eval=FALSE,echo=FALSE}
+```{r look.at.counts, eval=FALSE,echo=FALSE}
 table(Idents(p01.counts))
 table(Idents(p02.counts))
 table(Idents(p10.counts))
@@ -252,14 +252,19 @@ norm.brca.epithelial.individual.10.objects<-norm.brca.epithelial.individual.obje
 ## Downsample NORM/BRCA datasets to have a similar number of cells as average PDX samples 373 (cells/state)
 
 ```{r downsample.norm.brca.to.avg.PDX.cells.373, eval = FALSE}
+Idents(norm.brca.epithelial.individual.1.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.1.objects <- subset(norm.brca.epithelial.individual.1.objects, downsample = 373)
+Idents(norm.brca.epithelial.individual.2.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.2.objects <- subset(norm.brca.epithelial.individual.2.objects, downsample = 373)
+Idents(norm.brca.epithelial.individual.3.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.3.objects <- subset(norm.brca.epithelial.individual.3.objects, downsample = 373)
+Idents(norm.brca.epithelial.individual.4.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.4.objects <- subset(norm.brca.epithelial.individual.4.objects, downsample = 373)
+Idents(norm.brca.epithelial.individual.9.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.9.objects <- subset(norm.brca.epithelial.individual.9.objects, downsample = 373)
+Idents(norm.brca.epithelial.individual.10.objects)<-"orig.ident"
 ds.norm.brca.epithelial.individual.10.objects <- subset(norm.brca.epithelial.individual.10.objects, downsample = 373)
 ```
-
 
 ## Generate a list of Seurat objects (PDX models and Norm/BRCA Individuals--downsampled to 373 cell/state) to perform the standard workflow integration on
 
@@ -333,7 +338,7 @@ ds.UMAP.integrated.data <- RunUMAP(ds.PCA.integrated.data, reduction = "pca", di
 
 ```{r look.at.UMAP.with.downsampled.373, fig.height=4, fig.width=8}
 ds.UMAP.integrated.data <- readRDS("/Users/paigehalas/Desktop/ds.UMAP.integrated.data.rds")
-DimPlot(ds.UMAP.integrated.data, reduction = "umap", label = TRUE)
+DimPlot(ds.UMAP.integrated.data, reduction = "umap", label = FALSE, pt.size = 2)
 ```
 
 ## Feature plot for nFeature_RNA to compare PDX cells and Norm/BRCA cells that are downsampled (373 cells/state)
